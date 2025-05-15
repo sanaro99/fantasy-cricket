@@ -1,6 +1,6 @@
 # Fantasy Cricket App
 
-This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and Supabase. It features OTP-based authentication, match view and player selection, and leaderboards.
+This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and Supabase. It features OAuth and email-password based authentication, match view and player selection, and weekly and league leaderboards. Currently only supports Indian Premier League (IPL), but can be extended to other leagues by adding the required API endpoints.
 
 ## Technologies Used
 
@@ -14,6 +14,8 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
 ### Prerequisites
 - Node.js (v16 or later recommended)
 - npm or yarn
+- Supabase account
+- Sportmonks API key
 
 ### Installation & Local Setup
 
