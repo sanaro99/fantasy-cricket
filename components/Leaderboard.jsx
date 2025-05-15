@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Pagination from './Pagination';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function Leaderboard() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   // helper to compute week start (UTC Sunday)
   const computeWeekStart = () => {
     const now = new Date();
@@ -41,8 +44,28 @@ export default function Leaderboard() {
   const [leaguePage, setLeaguePage] = useState(1);
   const [weeklyPage, setWeeklyPage] = useState(1);
 
+  // Check authentication on mount
+  useEffect(() => {
+    let mounted = true;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        if (!session && mounted) {
+          router.replace('/login');
+        }
+        setCheckingAuth(false);
+      } else if (event === 'SIGNED_OUT' && mounted) {
+        router.replace('/login');
+      }
+    });
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, [router]);
+
   // initial load: league leaderboard and week options
   useEffect(() => {
+    if (checkingAuth) return;
     async function fetchInitialData() {
       setLoading(true);
       try {
@@ -57,10 +80,11 @@ export default function Leaderboard() {
       setLoading(false);
     }
     fetchInitialData();
-  }, []);
+  }, [checkingAuth]);
 
   // fetch weekly leaderboard when selectedWeek changes
   useEffect(() => {
+    if (checkingAuth) return;
     async function fetchWeeklyData() {
       setWeeklyLoading(true);
       try {
@@ -73,7 +97,9 @@ export default function Leaderboard() {
       setWeeklyLoading(false);
     }
     fetchWeeklyData();
-  }, [selectedWeek]);
+  }, [selectedWeek, checkingAuth]);
+
+  if (checkingAuth) return null;
 
   if (loading) {
     return (

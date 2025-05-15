@@ -1,8 +1,36 @@
 import Head from 'next/head';
 import Navbar from '../components/Navbar';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Rules() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        if (!session && mounted) {
+          router.replace('/login');
+        }
+        setCheckingAuth(false);
+      } else if (event === 'SIGNED_OUT' && mounted) {
+        router.replace('/login');
+      }
+    });
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, [router]);
+
+  if (checkingAuth) return null;
+
+  // Place all hooks above this line
+
   return (
     <>
       <Head>

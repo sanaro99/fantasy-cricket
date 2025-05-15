@@ -39,8 +39,8 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       setIsMenuOpen(false); // Close menu before logout
-      // Call our server-side logout endpoint
-      await fetch('/api/logout', { method: 'POST' });
+      // Use Supabase client-side sign out to clear session
+      await import('../lib/supabaseClient').then(({ supabase }) => supabase.auth.signOut());
       router.push('/login');
     } catch (error) {
       console.error('Error logging out:', error.message);

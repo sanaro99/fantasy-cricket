@@ -12,6 +12,7 @@ export default async function handler(req, res) {
     if (mode === 'login') {
       // Login
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[Login] signInWithPassword result:', data, error);
       if (error) throw error;
       // Log login
       await supabase.from('login_audit').insert([

@@ -1,16 +1,87 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 
 export default function Matches() {
+  const router = useRouter();
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [yesterdayFixtures, setYesterdayFixtures] = useState([]);
   const [todayFixtures, setTodayFixtures] = useState([]);
   const [tomorrowFixtures, setTomorrowFixtures] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Check authentication on mount
+  useEffect(() => {
+    let mounted = true;
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION') {
+        if (!session && mounted) {
+          router.replace('/login');
+        }
+        setCheckingAuth(false);
+      } else if (event === 'SIGNED_OUT' && mounted) {
+        router.replace('/login');
+      }
+    });
+    return () => {
+      mounted = false;
+      data.subscription.unsubscribe();
+    };
+  }, [router]);
+
   // Fetch fixtures from our proxy API
   useEffect(() => {
+    if (checkingAuth) return;
+    async function fetchFixtures() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const res = await fetch('/api/fixtures');
+        const data = await res.json();
+        
+        if (!data || !data.data) {
+          throw new Error('Invalid response format');
+        }
+
+        const fixtures = data.data || [];
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+
+        const formatDate = (date) => date.toISOString().slice(0, 10);
+        
+        const yFixtures = fixtures.filter(fixture => 
+          new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(yesterday)
+        );
+        
+        const tFixtures = fixtures.filter(fixture => 
+          new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(today)
+        );
+        
+        const tmFixtures = fixtures.filter(fixture => 
+          new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(tomorrow)
+        );
+
+        setYesterdayFixtures(yFixtures);
+        setTodayFixtures(tFixtures);
+        setTomorrowFixtures(tmFixtures);
+        
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchFixtures();
+  }, [checkingAuth]);
+
+  if (checkingAuth) return null;
+
     async function fetchFixtures() {
       try {
         setLoading(true);
@@ -55,9 +126,7 @@ export default function Matches() {
       }
     }
 
-    fetchFixtures();
-  }, []);
-
+    // (no-op: moved fetchFixtures to above, effect now uses [checkingAuth] as dependency)
   // Helper for rendering static fixture cards (yesterday and tomorrow)
   const renderStaticFixtureCard = (fixture) => (
     <div

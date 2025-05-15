@@ -4,7 +4,23 @@ import AuthForm from '../components/AuthForm';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabaseClient';
+
 export default function Login() {
+  const router = useRouter();
+
+  useEffect(() => {
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.replace('/matches');
+      }
+    }
+    checkSession();
+  }, [router]);
+
   return (
     <>
       <Head>

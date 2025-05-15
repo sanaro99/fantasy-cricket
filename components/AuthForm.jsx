@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabaseClient';
 
 export default function AuthForm() {
   const router = useRouter();
@@ -33,13 +34,10 @@ export default function AuthForm() {
     if (!validateEmail(email)) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/auth-credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'login', email, password })
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Login failed');
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[AuthForm] Client-side login result:', data, error);
+      if (error) throw error;
+      // Optionally, you can log the login event via API route here
       router.push('/matches');
     } catch (error) {
       setAuthError(error.message || 'Error logging in. Please try again.');
@@ -57,13 +55,17 @@ export default function AuthForm() {
     if (!validateEmail(email)) return;
     setLoading(true);
     try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      console.log('[AuthForm] Client-side signup result:', data, error);
+      if (error) throw error;
+      // Now create the user record in your DB
       const res = await fetch('/api/auth-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: 'signup', email, password, firstName, lastName })
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Signup failed');
+      if (!res.ok) throw new Error(result.message || 'Signup failed (user record)');
       router.push('/matches');
     } catch (error) {
       setAuthError(error.message || 'Error signing up. Please try again.');
@@ -72,10 +74,20 @@ export default function AuthForm() {
     }
   };
 
-  // TODO: For OAuth, consider using a dedicated API route or Supabase Edge Function
+  // TODO: For OAuth, use Supabase client directly
   const handleOAuth = async (provider) => {
-    alert('OAuth login is not yet refactored to server-side. Please use email/password for now.');
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({ provider });
+      if (error) throw error;
+      // The user will be redirected by Supabase
+    } catch (error) {
+      setAuthError(error.message || 'OAuth error');
+    } finally {
+      setLoading(false);
+    }
   };
+
 
 
   return (
