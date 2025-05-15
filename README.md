@@ -38,7 +38,8 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
      SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
      # (Other required variables, e.g. SPORTMONKS_API_TOKEN, etc)
      ```
-   - **Important:** The Service Role Key is never exposed to the client/browser. All database connections are handled server-side only via Next.js API routes.
+   - **Important:** The Service Role Key is never exposed to the client/browser. All database connections that require elevated privileges are handled server-side only via Next.js API routes.
+   - **User Profile Fetching:** As of the latest update, user profile data (such as first and last name) is fetched directly from Supabase using the client SDK on the frontend. There is no longer any need for a `/api/profile` endpoint for user session/profile logic. Ensure that your `users` table in Supabase contains `first_name` and `last_name` fields for each user.
 4. **Run the development server:**
    ```bash
    npm run dev
@@ -60,15 +61,19 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
 The app requires the following environment variables in `.env.local`:
 
 ```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 SUPABASE_URL=your-supabase-url
 SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 SPORTMONKS_API_TOKEN=your-sportmonks-api-token
 ```
 
 **Security Note:**
-- All Supabase database operations are performed server-side using the Service Role Key.
+- All Supabase database operations are performed server-side using the Service Role Key `SUPABASE_SERVICE_ROLE_KEY`.
 - The Service Role Key must never be exposed to the client/browser. Do not use it in any client-side code or in the public environment variables.
 - The app architecture enforces this by routing all database operations through Next.js API endpoints.
+- The app uses Supabase for authentication and user session management.
+- The Supabase anon key is used to fetch the user profile from the database and manage the user session `NEXT_PUBLIC_SUPABASE_ANON_KEY`. - Enable RLS policy for database tables to prevent unauthorized access.
 You can find these values in your [Supabase project settings](https://app.supabase.com/).
 
 ## Usage

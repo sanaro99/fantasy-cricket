@@ -110,8 +110,10 @@ export default function Home() {
   // If still checking session, render nothing
   if (checkingSession) return null;
 
-  // Otherwise, render your home page content here (or redirect to login)
-  // Example:
-  // router.push('/login');
-  return null;
+  // If not authenticated, redirect to login
+  useEffect(() => {
+    if (!checkingSession && !showWelcome) {
+      router.replace('/login');
+    }
+  }, [checkingSession, showWelcome, router]);
 }
