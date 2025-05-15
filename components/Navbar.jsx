@@ -2,7 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
 
 export default function Navbar() {
   const router = useRouter();
@@ -40,13 +39,14 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       setIsMenuOpen(false); // Close menu before logout
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Call our server-side logout endpoint
+      await fetch('/api/logout', { method: 'POST' });
       router.push('/login');
     } catch (error) {
       console.error('Error logging out:', error.message);
     }
   };
+
   
   // Handle navigation with menu closing
   const handleNavigation = (path) => {

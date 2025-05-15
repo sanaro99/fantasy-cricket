@@ -32,9 +32,11 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
    - Create a `.env.local` file in the root directory.
    - Add the following variables (replace with your actual Supabase project values):
      ```env
-     NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-     NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+     SUPABASE_URL=your-supabase-url
+     SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+     # (Other required variables, e.g. SPORTMONKS_API_TOKEN, etc)
      ```
+   - **Important:** The Service Role Key is never exposed to the client/browser. All database connections are handled server-side only via Next.js API routes.
 4. **Run the development server:**
    ```bash
    npm run dev
@@ -56,10 +58,15 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
 The app requires the following environment variables in `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+SUPABASE_URL=your-supabase-url
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+SPORTMONKS_API_TOKEN=your-sportmonks-api-token
 ```
 
+**Security Note:**
+- All Supabase database operations are performed server-side using the Service Role Key.
+- The Service Role Key must never be exposed to the client/browser. Do not use it in any client-side code or in the public environment variables.
+- The app architecture enforces this by routing all database operations through Next.js API endpoints.
 You can find these values in your [Supabase project settings](https://app.supabase.com/).
 
 ## Usage

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 
 export default function AuthForm() {
@@ -31,33 +30,18 @@ export default function AuthForm() {
       setAuthError('Please enter both email and password');
       return;
     }
-    
     if (!validateEmail(email)) return;
-    
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch('/api/auth-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'login', email, password })
       });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Log the login in login_audit
-      await supabase.from('login_audit').insert([
-        {
-          user_id: data.user.id,
-          email,
-          status: 'LOGIN_SUCCESS',
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || 'Login failed');
       router.push('/matches');
     } catch (error) {
-      console.error('Login error:', error);
       setAuthError(error.message || 'Error logging in. Please try again.');
     } finally {
       setLoading(false);
@@ -66,92 +50,33 @@ export default function AuthForm() {
 
   const handleSignUp = async () => {
     setAuthError('');
-    // Validate all required fields
-    const requiredFields = ['firstName', 'lastName', 'email', 'password'];
-    
     if (!firstName || !lastName || !email || !password) {
       alert('Please fill in all required fields');
       return;
     }
-    
-    // Validate email format
     if (!validateEmail(email)) return;
-    
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+      const res = await fetch('/api/auth-credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'signup', email, password, firstName, lastName })
       });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Create the user in our users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: data.user.id, // Use the UUID from auth.users
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select();
-        
-      if (userError) {
-        console.error('Error creating user in public.users table:', userError);
-        throw userError;
-      }
-      
-      // Log the signup in login_audit
-      await supabase.from('login_audit').insert([
-        { 
-          user_id: data.user.id, // Use the auth user ID
-          email,
-          status: 'SIGNUP_COMPLETE',
-          created_at: new Date().toISOString()
-        }
-      ]);
-      
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || 'Signup failed');
       router.push('/matches');
     } catch (error) {
-      console.error('Signup error:', error);
       setAuthError(error.message || 'Error signing up. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  // TODO: For OAuth, consider using a dedicated API route or Supabase Edge Function
   const handleOAuth = async (provider) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // Log the login in login_audit
-      await supabase.from('login_audit').insert([
-        {
-          user_id: data.user.id,
-          email: data.user.email,
-          status: 'LOGIN_SUCCESS',
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
-      router.push('/matches');
-    } catch (error) {
-      console.error('OAuth error:', error);
-      setAuthError(error.message || 'Error logging in with OAuth. Please try again.');
-    }
+    alert('OAuth login is not yet refactored to server-side. Please use email/password for now.');
   };
+
 
   return (
     <div className="w-full max-w-md bg-navy-100/10 backdrop-blur-md p-8 rounded-xl shadow-2xl">

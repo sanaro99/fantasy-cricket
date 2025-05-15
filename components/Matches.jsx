@@ -124,9 +124,12 @@ export default function Matches() {
     // Fetch current user
     useEffect(() => {
       async function fetchUser() {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (!error) {
-          setCurrentUser(user);
+        try {
+          const res = await fetch('/api/current-user');
+          const { user } = await res.json();
+          setCurrentUser(user || null);
+        } catch (e) {
+          setCurrentUser(null);
         }
       }
       fetchUser();
@@ -137,16 +140,10 @@ export default function Matches() {
       async function checkUserSelection() {
         if (!currentUser) return;
         try {
-          const { data, error } = await supabase
-            .from('player_selections')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .eq('fixture_id', fixture.id);
-          if (error) {
-            setErrorSelection(error.message);
-          } else if (data && data.length > 0) {
-            setUserSelection(data[0]);
-          }
+          const res = await fetch(`/api/player-selections?user_id=${currentUser.id}&fixture_id=${fixture.id}`);
+          if (!res.ok) throw new Error('Error fetching selection');
+          const { selection } = await res.json();
+          if (selection) setUserSelection(selection);
         } catch (err) {
           setErrorSelection(err.message);
         } finally {
@@ -282,7 +279,8 @@ export default function Matches() {
       }
       setSubmitting(true);
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // Get current user from state (already fetched)
+        const user = currentUser;
         if (!user) {
           alert("User not authenticated.");
           setSubmitting(false);

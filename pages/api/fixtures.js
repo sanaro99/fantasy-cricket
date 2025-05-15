@@ -1,9 +1,10 @@
 // pages/api/fixtures.js
-import { supabase } from '../../lib/supabaseClient';
+import { createServerSupabaseClient } from '../../lib/supabaseClient';
 
 export default async function handler(req, res) {
   try {
     // Try cache lookup
+    const supabase = createServerSupabaseClient();
     const { data: cacheEntries, error: cacheErr } = await supabase
       .from('fixture_cache')
       .select('fixtures, fetched_at')

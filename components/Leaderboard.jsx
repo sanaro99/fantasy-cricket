@@ -45,19 +45,15 @@ export default function Leaderboard() {
   useEffect(() => {
     async function fetchInitialData() {
       setLoading(true);
-      // fetch available week_starts
-      const { data: weekStartsRaw } = await supabase
-        .from('weekly_leaderboard')
-        .select('week_start')
-        .order('week_start', { ascending: false });
-      const weekStarts = Array.from(new Set((weekStartsRaw || []).map(r => r.week_start)));
-      setWeekOptions(weekStarts);
-      // fetch league leaderboard
-      const { data: leagueRows } = await supabase
-        .from('league_leaderboard')
-        .select('rank, user_name, total_score')
-        .order('total_score', { ascending: false });
-      setLeagueData(leagueRows ?? []);
+      try {
+        const res = await fetch('/api/leaderboard');
+        const { weekOptions, league } = await res.json();
+        setWeekOptions(weekOptions || []);
+        setLeagueData(league || []);
+      } catch (e) {
+        setWeekOptions([]);
+        setLeagueData([]);
+      }
       setLoading(false);
     }
     fetchInitialData();
@@ -67,12 +63,13 @@ export default function Leaderboard() {
   useEffect(() => {
     async function fetchWeeklyData() {
       setWeeklyLoading(true);
-      const { data: weeklyRows } = await supabase
-        .from('weekly_leaderboard')
-        .select('rank, user_name, weekly_score')
-        .eq('week_start', selectedWeek)
-        .order('weekly_score', { ascending: false });
-      setWeeklyData(weeklyRows ?? []);
+      try {
+        const res = await fetch(`/api/leaderboard?week_start=${encodeURIComponent(selectedWeek)}`);
+        const { weekly } = await res.json();
+        setWeeklyData(weekly || []);
+      } catch (e) {
+        setWeeklyData([]);
+      }
       setWeeklyLoading(false);
     }
     fetchWeeklyData();

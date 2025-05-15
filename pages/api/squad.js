@@ -1,5 +1,5 @@
 // pages/api/squad.js
-import { supabase } from '../../lib/supabaseClient';
+import { createServerSupabaseClient } from '../../lib/supabaseClient';
 
 export default async function handler(req, res) {
   try {
@@ -15,6 +15,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "API token is not defined in environment variables" });
     }
 
+    const supabase = createServerSupabaseClient();
     // Try cache lookup
     const { data: cacheEntry, error: cacheErr } = await supabase
       .from('squad_cache')

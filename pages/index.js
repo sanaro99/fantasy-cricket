@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
 
 export default function Home() {
   const router = useRouter();
@@ -8,25 +7,18 @@ export default function Home() {
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    // Check for existing auth session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSession(session);
-        // Fetch user profile (first and last name)
-        supabase
-          .from('users')
-          .select('first_name, last_name')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data, error }) => {
-            if (!error && data) setProfile(data);
-          });
-        // Show welcome then redirect
-        setTimeout(() => router.push('/matches'), 2000);
-      } else {
-        router.push('/login');
-      }
-    });
+    // Fetch session and profile from API
+    fetch('/api/profile')
+      .then(res => res.json())
+      .then(({ session, profile }) => {
+        if (session && profile) {
+          setSession(session);
+          setProfile(profile);
+          setTimeout(() => router.push('/matches'), 2000);
+        } else {
+          router.push('/login');
+        }
+      });
   }, [router]);
 
   // Wait until session and profile are loaded
