@@ -27,8 +27,7 @@ export default async function handler(req, res) {
       const { error: userError } = await supabase.from('users').insert([
         {
           id: data.user.id,
-          first_name: firstName,
-          last_name: lastName,
+          full_name: fullName,
           email,
           created_at: new Date().toISOString(),
         },

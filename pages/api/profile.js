@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     // Fetch profile from users table
     const { data: profile, error: profErr } = await supabase
       .from('users')
-      .select('first_name, last_name')
+      .select('full_name')
       .eq('id', user.id)
       .single();
     console.log('[API /profile] Profile:', profile, 'Profile error:', profErr);

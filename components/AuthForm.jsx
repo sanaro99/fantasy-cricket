@@ -8,8 +8,7 @@ export default function AuthForm() {
   const [mode, setMode] = useState('login'); // 'login' or 'signup'
   
   // Form fields
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -48,7 +47,7 @@ export default function AuthForm() {
 
   const handleSignUp = async () => {
     setAuthError('');
-    if (!firstName || !lastName || !email || !password) {
+    if (!fullName || !email || !password) {
       alert('Please fill in all required fields');
       return;
     }
@@ -62,7 +61,7 @@ export default function AuthForm() {
       const res = await fetch('/api/auth-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'signup', email, password, firstName, lastName })
+        body: JSON.stringify({ mode: 'signup', email, password, fullName })
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Signup failed (user record)');
@@ -129,27 +128,15 @@ export default function AuthForm() {
               <div>
                 {/* Sign Up Form */}
                 <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-1">First Name*</label>
-                      <input
-                        type="text"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        required
-                        className="w-full px-4 py-3 bg-navy-100/20 border border-navy-200/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-navy-200/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white mb-1">Last Name*</label>
-                      <input
-                        type="text"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        required
-                        className="w-full px-4 py-3 bg-navy-100/20 border border-navy-200/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-navy-200/50"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-1">Full Name*</label>
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      required
+                      className="w-full px-4 py-3 bg-navy-100/20 border border-navy-200/30 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-navy-200/50"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-white mb-1">Email*</label>

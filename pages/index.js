@@ -29,15 +29,15 @@ export default function Home() {
         // Now fetch the profile from users table
         const { data: profile, error: profileError } = await supabase
           .from('users')
-          .select('first_name, last_name')
+          .select('full_name')
           .eq('id', user.id)
           .single();
         setLoadingProfile(false);
         console.log('[Home] Profile fetched:', profile, 'Profile error:', profileError);
-        if (profile && profile.first_name && profile.last_name) {
+        if (profile && profile.full_name) {
           setWelcomeProfile(profile);
           setShowPersonalizedWelcome(true);
-          console.log('[Home] Personalized welcome set:', profile.first_name, profile.last_name);
+          console.log('[Home] Personalized welcome set:', profile.full_name);
           // Do not redirect here; let a separate effect handle it
         } else {
           router.replace('/matches');
@@ -74,6 +74,18 @@ export default function Home() {
     }
   }, [hasRenderedPersonalizedWelcome, router]);
 
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!checkingSession && !showWelcome) {
+      router.replace('/login');
+    }
+  }, [checkingSession, showWelcome, router]);
+
+  // All other hooks are already above
+
+  // If still checking session, render nothing
+  if (checkingSession) return null;
+
   // Render welcome message if showWelcome is true
   if (showWelcome) {
     console.log('[Home] Render:', {
@@ -88,7 +100,7 @@ export default function Home() {
         <div className="bg-white/10 backdrop-blur-lg p-10 rounded-2xl shadow-2xl flex flex-col items-center">
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
             {showPersonalizedWelcome && welcomeProfile ? (
-              <>Welcome back {welcomeProfile.first_name} {welcomeProfile.last_name}!</>
+              <>Welcome back {welcomeProfile.full_name}!</>
             ) : (
               <>Welcome back!</>
             )}
@@ -106,14 +118,4 @@ export default function Home() {
       </div>
     );
   }
-
-  // If still checking session, render nothing
-  if (checkingSession) return null;
-
-  // If not authenticated, redirect to login
-  useEffect(() => {
-    if (!checkingSession && !showWelcome) {
-      router.replace('/login');
-    }
-  }, [checkingSession, showWelcome, router]);
 }
