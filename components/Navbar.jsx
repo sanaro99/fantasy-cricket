@@ -35,17 +35,56 @@ export default function Navbar() {
     };
   }, [router]);
   
-  // Handle logout
+  // Modal state
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  // Show modal instead of immediate logout
+  const handleLogoutClick = () => {
+    setIsMenuOpen(false);
+    setShowLogoutModal(true);
+  };
+
+  // Confirm logout
   const handleLogout = async () => {
+    setShowLogoutModal(false);
     try {
-      setIsMenuOpen(false); // Close menu before logout
-      // Use Supabase client-side sign out to clear session
       await import('../lib/supabaseClient').then(({ supabase }) => supabase.auth.signOut());
       router.push('/login');
     } catch (error) {
       console.error('Error logging out:', error.message);
     }
   };
+
+  // Delete account and logout
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      // Get JWT from localStorage/session (Supabase client)
+      const { supabase } = await import('../lib/supabaseClient');
+      const session = supabase.auth.getSession && (await supabase.auth.getSession()).data.session;
+      const token = session?.access_token;
+      if (!token) throw new Error('No session token found');
+
+      const res = await fetch('/api/delete-account', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to delete account');
+      }
+      // After deletion, sign out
+      await supabase.auth.signOut();
+      router.push('/login');
+    } catch (error) {
+      alert('Error deleting account: ' + (error.message || error));
+    } finally {
+      setDeletingAccount(false);
+      setShowLogoutModal(false);
+    }
+  };
+
 
   
   // Handle navigation with menu closing
@@ -86,7 +125,7 @@ export default function Navbar() {
 </Link>
               <span 
   className="ml-4 px-4 py-1 text-navy-600 font-semibold hover:text-navy-400 transition-colors duration-200 cursor-pointer"
-  onClick={handleLogout}
+  onClick={handleLogoutClick}
 >
   Logout
 </span>
@@ -139,13 +178,43 @@ export default function Navbar() {
 
             <span 
   className="block px-5 py-2 text-navy-300 font-semibold hover:text-navy-400 transition-colors duration-200 cursor-pointer"
-  onClick={handleLogout}
+  onClick={handleLogoutClick}
 >
   Logout
 </span>
           </div>
         </div>
       )}
-    </>
+    {/* Logout/Delete Modal */}
+    {showLogoutModal && (
+      <div className="fixed inset-0 z-[2000] bg-black/40 flex items-center justify-center">
+        <div className="bg-navy-100/80 backdrop-blur-md rounded-lg shadow-xl p-8 w-full max-w-xs flex flex-col items-center">
+          <h2 className="text-xl font-bold mb-4 text-navy-700">Account Options</h2>
+          <p className="mb-6 text-navy-600">Do you want to log out or delete your account?</p>
+          <button
+            className="w-full mb-3 py-2 px-4 bg-navy-400 hover:bg-navy-600 text-white font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-navy-600"
+            onClick={handleLogout}
+            disabled={deletingAccount}
+          >
+            Log out
+          </button>
+          <button
+            className="w-full py-2 px-4 bg-red-500 hover:bg-red-700 text-white font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-red-600"
+            onClick={handleDeleteAccount}
+            disabled={deletingAccount}
+          >
+            {deletingAccount ? 'Deleting...' : 'Delete Account'}
+          </button>
+          <button
+            className="mt-4 text-navy-400 hover:text-navy-700 underline"
+            onClick={() => setShowLogoutModal(false)}
+            disabled={deletingAccount}
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   );
 }

@@ -39,7 +39,8 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
      # (Other required variables, e.g. SPORTMONKS_API_TOKEN, etc)
      ```
    - **Important:** The Service Role Key is never exposed to the client/browser. All database connections that require elevated privileges are handled server-side only via Next.js API routes.
-   - **User Profile Fetching:** As of the latest update, user profile data (such as first and last name) is fetched directly from Supabase using the client SDK on the frontend. There is no longer any need for a `/api/profile` endpoint for user session/profile logic. Ensure that your `users` table in Supabase contains `first_name` and `last_name` fields for each user.
+   - **User Profile Creation:** User profiles are now automatically created in the `users` table by a Supabase trigger/function when a new user signs up. The `full_name` is passed as part of the sign up metadata (no more `first_name`/`last_name`). Do **not** manually insert into the `users` table after sign up.
+   - **User Profile Fetching:** User profile data (such as `full_name`) is fetched directly from Supabase using the client SDK on the frontend. There is no longer any need for a `/api/profile` endpoint for user session/profile logic.
 4. **Run the development server:**
    ```bash
    npm run dev
@@ -55,6 +56,10 @@ This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and 
 - **pages/**: Next.js pages and API routes
 - **styles/**: Global CSS (Tailwind CSS) files
 - **public/**: Static assets (images, icons, etc.)
+
+## Authentication & Account Management
+
+See [AUTHENTICATION.md](./AUTHENTICATION.md) for details on how sign up, user profile creation, logout, and account deletion are handled, including Supabase triggers and security notes.
 
 ## Environment Variables
 

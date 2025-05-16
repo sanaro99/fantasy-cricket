@@ -54,17 +54,14 @@ export default function AuthForm() {
     if (!validateEmail(email)) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } }
+      });
       console.log('[AuthForm] Client-side signup result:', data, error);
       if (error) throw error;
-      // Now create the user record in your DB
-      const res = await fetch('/api/auth-credentials', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'signup', email, password, fullName })
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Signup failed (user record)');
+      // No need to call API to create user profile, trigger will handle it
       router.push('/matches');
     } catch (error) {
       setAuthError(error.message || 'Error signing up. Please try again.');

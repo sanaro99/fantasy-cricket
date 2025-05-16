@@ -23,17 +23,7 @@ export default async function handler(req, res) {
       // Signup
       const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
-      // Create user in users table
-      const { error: userError } = await supabase.from('users').insert([
-        {
-          id: data.user.id,
-          full_name: fullName,
-          email,
-          created_at: new Date().toISOString(),
-        },
-      ]);
-      if (userError) throw userError;
-      // Log signup
+      // Optionally log signup (not required for user creation)
       await supabase.from('login_audit').insert([
         { user_id: data.user.id, email, status: 'SIGNUP_COMPLETE', created_at: new Date().toISOString() },
       ]);
