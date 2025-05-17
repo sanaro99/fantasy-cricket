@@ -228,17 +228,23 @@ export default function Matches() {
       }
     }, [fixture.starting_at]);
 
-    // fetch manual override status and poll every 5s
+    // fetch manual override status and poll every 1 min
     useEffect(() => {
       async function fetchOverride() {
         try {
-          const res = await fetch('/api/selection-lock-status');
-          if (res.ok) {
-            const { overrideEnabled: oe } = await res.json();
-            setOverrideEnabled(oe);
+          // Fetch the latest lock override status from Supabase
+          const { data, error } = await supabase
+            .from('selection_lock_override')
+            .select('enabled')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .single();
+          if (error) throw error;
+          if (data && typeof data.enabled === 'boolean') {
+            setOverrideEnabled(data.enabled);
           }
-        } catch (err) {
-          console.error('Error fetching lock override status:', err);
+        } catch (e) {
+          console.error('Error fetching lock override status:', e);
         }
       }
       fetchOverride();
@@ -282,16 +288,6 @@ export default function Matches() {
     const handleSelectPlayer = async (team, player) => {
       // refresh override status
       let oe = overrideEnabled;
-      try {
-        const res = await fetch('/api/selection-lock-status');
-        if (res.ok) {
-          const { overrideEnabled: oe2 } = await res.json();
-          oe = oe2;
-          setOverrideEnabled(oe2);
-        }
-      } catch (e) {
-        console.error('Error fetching lock override status:', e);
-      }
 
       if (!oe && isLocked) {
         alert('Match has already started. Selections are closed.');
@@ -323,11 +319,17 @@ export default function Matches() {
       // refresh override status
       let oe = overrideEnabled;
       try {
-        const res = await fetch('/api/selection-lock-status');
-        if (res.ok) {
-          const { overrideEnabled: oe2 } = await res.json();
-          oe = oe2;
-          setOverrideEnabled(oe2);
+        // Fetch the latest lock override status from Supabase
+        const { data, error } = await supabase
+          .from('selection_lock_override')
+          .select('enabled')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .single();
+        if (error) throw error;
+        if (data && typeof data.enabled === 'boolean') {
+          oe = data.enabled;
+          setOverrideEnabled(data.enabled);
         }
       } catch (e) {
         console.error('Error fetching lock override status:', e);
@@ -404,7 +406,7 @@ export default function Matches() {
       
       return (
         <div className="p-4 text-white">
-          <h3 className="text-xl font-semibold mb-4 text-shadow-sm">Your Selection</h3>
+          <h3 className="text-xl font-semibold mb-4 text-shadow-sm">Your Selections</h3>
           
           <div className="bg-navy-100/30 backdrop-blur-sm rounded-lg border border-navy-500/20 p-4 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -482,7 +484,7 @@ export default function Matches() {
         
         {/* Selection Summary */}
         <div className="mb-4 p-4 bg-black/40 backdrop-blur-sm rounded-lg border border-navy-500/20">
-          <h4 className="font-semibold text-[#FFD700] mb-2 text-shadow-sm">Your Selection</h4>
+          <h4 className="font-semibold text-[#FFD700] mb-2 text-shadow-sm">Your Selections</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-white/80 mb-1 font-medium">{fixture.localteam.name}</p>
