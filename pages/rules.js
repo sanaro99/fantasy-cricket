@@ -66,11 +66,15 @@ export default function Rules() {
                   <ul className="space-y-4 text-white">
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Jump in before each match and lock in your predictions for the day.</span>
+                      <span className="font-medium">Jump in before each match and select your players for both teams.</span>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Choose two standout batsmen from each side who you believe will shine on the batting field.</span>
+                      <span className="font-medium">Selections can not be done once the match starts.</span>
+                    </li>
+                    <li className="flex items-start space-x-3">
+                      <span className="text-[#FFD700] text-xl">•</span>
+                      <span className="font-medium">Pick <b>4 players from each team</b> (8 total) — you can choose batsmen, bowlers, or all-rounders!</span>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
@@ -78,7 +82,7 @@ export default function Rules() {
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Remember, after submission, your choices are final for that match.</span>
+                      <span className="font-medium">After submission, your choices are final for that match.</span>
                     </li>
                   </ul>
                 </div>
@@ -91,19 +95,19 @@ export default function Rules() {
                   <ul className="space-y-4 text-white">
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Rack up points as your chosen players rack up runs and achievements during the game.</span>
+                      <span className="font-medium">Earn points based on your selected players' batting and bowling performances:</span>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Snag 100 points every time one of your picks notches up a half-century (50 runs) in a match.</span>
+                      <span className="font-medium">Batting: <b>50 points</b> for a half-century (50+ runs), <b>150 points</b> for a century (100+ runs).</span>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">If your chosen star batsman hits a century (100 runs), you’ll bag a whopping 200 points!</span>
+                      <span className="font-medium">Bowling: <b>30 points</b> for each wicket taken by your selected players.</span>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Watch your score climb after every match—check the Leaderboard to see where you stand!</span>
+                      <span className="font-medium">Track your score after every match—check the Leaderboard to see where you stand!</span>
                     </li>
                   </ul>
                 </div>
