@@ -190,16 +190,11 @@ export default function Matches() {
     const [isLocked, setIsLocked] = useState(new Date() >= new Date(fixture.starting_at));
     const [overrideEnabled, setOverrideEnabled] = useState(false);
 
-    // Fetch current user
+    // Fetch current user from Supabase client (no API call)
     useEffect(() => {
       async function fetchUser() {
-        try {
-          const res = await fetch('/api/current-user');
-          const { user } = await res.json();
-          setCurrentUser(user || null);
-        } catch (e) {
-          setCurrentUser(null);
-        }
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUser(user || null);
       }
       fetchUser();
     }, []);

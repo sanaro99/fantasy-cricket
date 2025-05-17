@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     const baseUrl = 'https://cricket.sportmonks.com/api/v2.0/fixtures';
     const params = new URLSearchParams({
       'api_token': apiToken,
-      'league_id': '3',  // IPL (Indian Premier League)
+      'filter[league_id]': '1',  // IPL (Indian Premier League)
       'filter[starts_between]': startsBetween,
       'include': 'localteam,visitorteam'
     });
