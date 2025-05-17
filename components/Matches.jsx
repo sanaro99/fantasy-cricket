@@ -298,7 +298,7 @@ export default function Matches() {
         if (localSelected.find(p => p.id === player.id)) {
           // Remove player if already selected (deselect)
           setLocalSelected(prev => prev.filter(p => p.id !== player.id));
-        } else if (localSelected.length < 2) {
+        } else if (localSelected.length < 4) {
           // Add player if not at max selection
           setLocalSelected(prev => [...prev, player]);
         }
@@ -307,7 +307,7 @@ export default function Matches() {
         if (visitorSelected.find(p => p.id === player.id)) {
           // Remove player if already selected (deselect)
           setVisitorSelected(prev => prev.filter(p => p.id !== player.id));
-        } else if (visitorSelected.length < 2) {
+        } else if (visitorSelected.length < 4) {
           // Add player if not at max selection
           setVisitorSelected(prev => [...prev, player]);
         }
@@ -339,8 +339,8 @@ export default function Matches() {
         alert('Match has already started. Selections are closed.');
         return;
       }
-      if (localSelected.length !== 2 || visitorSelected.length !== 2) {
-        alert("Please select exactly 2 players from each team.");
+      if (localSelected.length !== 4 || visitorSelected.length !== 4) {
+        alert("Please select exactly 4 players from each team.");
         return;
       }
       setSubmitting(true);
@@ -521,14 +521,14 @@ export default function Matches() {
         
         <button
           onClick={handleSubmitSelection}
-          disabled={submitting || (!overrideEnabled && isLocked) || localSelected.length !== 2 || visitorSelected.length !== 2}
+          disabled={submitting || (!overrideEnabled && isLocked) || localSelected.length !== 4 || visitorSelected.length !== 4}
           className={`mt-4 w-full py-3 rounded-lg transform hover:scale-[1.02] transition-all shadow-lg ${
-            localSelected.length === 2 && visitorSelected.length === 2 && (overrideEnabled || !isLocked)
+            localSelected.length === 4 && visitorSelected.length === 4 && (overrideEnabled || !isLocked)
                ? 'bg-gradient-to-r from-navy-600 to-navy-700 text-white hover:from-navy-700 hover:to-navy-800'
                : 'bg-gray-500/50 text-white/70 cursor-not-allowed'
            }`}
         >
-          {submitting ? 'Submitting...' : `Submit Selection (${localSelected.length + visitorSelected.length}/4)`}
+          {submitting ? 'Submitting...' : `Submit Selection (${localSelected.length + visitorSelected.length}/8)`}
         </button>
       </div>
     );
@@ -547,7 +547,7 @@ export default function Matches() {
           <div className="flex items-center">
             <span className="font-semibold text-shadow-sm">{teamName}</span>
             <span className="ml-2 text-sm text-white/70 font-medium">
-              {selectedPlayers.length}/2 selected
+              {selectedPlayers.length}/4 selected
             </span>
           </div>
           <div className="flex items-center">
@@ -583,9 +583,8 @@ export default function Matches() {
                     selectedPlayers.find(p => p.id === player.id)
                       ? 'bg-navy-600 text-white shadow-lg scale-105'
                       : 'bg-navy-400/70 text-navy-100 hover:bg-navy-500/70'
-                  } ${selectedPlayers.length >= 2 && !selectedPlayers.find(p => p.id === player.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={selectedPlayers.length >= 2 && !selectedPlayers.find(p => p.id === player.id)}
-                >
+                  } ${selectedPlayers.length >= 4 && !selectedPlayers.find(p => p.id === player.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={selectedPlayers.length >= 4 && !selectedPlayers.find(p => p.id === player.id)} >
                   <img 
                     src={player.image_path} 
                     alt={player.fullname} 
@@ -630,6 +629,15 @@ export default function Matches() {
                 ))
               : <p className="text-white font-medium">No matches found for today.</p>
             }
+          </div>
+          {/* Selection & Scoring Section */}
+          <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 mb-8 text-white">
+            <h2 className="text-xl font-semibold mb-4 text-shadow-sm">Selection & Scoring</h2>
+            <p className="mb-2">Select 4 players from each team (8 total) per match:</p>
+            <ul className="list-disc list-inside ml-4 space-y-1">
+              <li>Batting: 50 points for half-century (50+ runs), 150 points for century (100+ runs)</li>
+              <li>Bowling: 30 points per wicket taken</li>
+            </ul>
           </div>
         </main>
       </div>

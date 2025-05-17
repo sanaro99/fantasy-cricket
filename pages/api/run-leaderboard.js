@@ -53,48 +53,74 @@ export default async function handler(req, res) {
 
       try{
       const baseUrl = 'https://cricket.sportmonks.com/api/v2.0/fixtures/'+fid;
-      const params = new URLSearchParams({
+      // Fetch batting stats
+      const paramsBat = new URLSearchParams({
         'api_token': apiToken,
         'include': 'batting.batsman'
       });
-    
-      const apiUrl = `${baseUrl}?${params.toString()}`;
+      const apiUrlBat = `${baseUrl}?${paramsBat.toString()}`;
+      console.log(apiUrlBat);
+      const responseBat = await fetch(apiUrlBat);
+      if (!responseBat.ok) {
+        console.error(`Failed to fetch fixture batting ${fid}:`, responseBat.statusText);
+        fixtureBatting[fid] = {};
+        continue;
+      }
+      const jsonBat = await responseBat.json();
 
-      console.log(apiUrl);
-      
-      // Fetch data from SportMonks
-      const response = await fetch(apiUrl);
-        if (!response.ok) {
-          console.error(`Failed to fetch fixture ${fid}:`, response.statusText);
-          fixtureBatting[fid] = {};
-          continue;
+      // Extract the actual batting array
+      let battingArr = [];
+      if (Array.isArray(jsonBat.data.batting)) {
+        battingArr = jsonBat.data.batting;
+        console.log(battingArr);
+      } else if (
+        jsonBat.data.batting &&
+        Array.isArray(jsonBat.data.batting.data)
+      ) {
+        battingArr = jsonBat.data.batting.data;
+        console.log("In if condition...");
+      }
+
+      // Map player_id -> total runs
+      const map = {};
+      for (const b of battingArr) {
+        if (b && b.player_id != null) {
+          const pid = Number(b.player_id);
+          const runs = Number(b.score || 0);
+          map[pid] = (map[pid] || 0) + runs;
         }
-        const json = await response.json();
+      }
+      fixtureBatting[fid] = map;
 
-        // Extract the actual batting array
-        let battingArr = [];
-        if (Array.isArray(json.data.batting)) {
-          battingArr = json.data.batting;
-          console.log(battingArr);
-        } else if (
-          json.data.batting &&
-          Array.isArray(json.data.batting.data)
-        ) {
-          battingArr = json.data.batting.data;
-          console.log("In if condition...");
-
+      // Fetch bowling stats
+      const paramsBowl = new URLSearchParams({
+        'api_token': apiToken,
+        'include': 'bowling.bowler'
+      });
+      const apiUrlBowl = `${baseUrl}?${paramsBowl.toString()}`;
+      console.log(apiUrlBowl);
+      const responseBowl = await fetch(apiUrlBowl);
+      let bowlingArr = [];
+      if (responseBowl.ok) {
+        const jsonBowl = await responseBowl.json();
+        if (Array.isArray(jsonBowl.data.bowling)) {
+          bowlingArr = jsonBowl.data.bowling;
+        } else if (jsonBowl.data.bowling && Array.isArray(jsonBowl.data.bowling.data)) {
+          bowlingArr = jsonBowl.data.bowling.data;
         }
-
-        // Map player_id -> total runs
-        const map = {};
-        for (const b of battingArr) {
-          if (b && b.player_id != null) {
-            const pid = Number(b.player_id);
-            const runs = Number(b.score || 0);
-            map[pid] = (map[pid] || 0) + runs;
-          }
+      } else {
+        console.error(`Failed to fetch fixture bowling ${fid}:`, responseBowl.statusText);
+      }
+      // Map player_id -> total wickets
+      const mapWickets = {};
+      for (const b of bowlingArr) {
+        if (b && b.player_id != null) {
+          const pid = Number(b.player_id);
+          const wickets = Number(b.wickets || 0);
+          mapWickets[pid] = (mapWickets[pid] || 0) + wickets;
         }
-        fixtureBatting[fid] = map;
+      }
+      fixtureBatting[`${fid}_wickets`] = mapWickets;
       } catch (e) {
         console.error(`Error fetching fixture ${fid}:`, e);
         fixtureBatting[fid] = {};
@@ -108,19 +134,27 @@ export default async function handler(req, res) {
     const weeklyScores = {};
     for (const sel of weeklySel) {
       const bats = fixtureBatting[sel.fixture_id] || {};
+      const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
       let pts = 0;
       const teamA = Array.isArray(sel.team_a_ids) ? sel.team_a_ids : [];
       const teamB = Array.isArray(sel.team_b_ids) ? sel.team_b_ids : [];
-      for (const pid of [...teamA, ...teamB]) pts += playerPoints(bats[pid] || 0);
+      for (const pid of [...teamA, ...teamB]) {
+        pts += playerPoints(bats[pid] || 0);
+        pts += 30 * (wickets[pid] || 0);
+      }
       weeklyScores[sel.user_id] = (weeklyScores[sel.user_id] || 0) + pts;
     }
     const leagueScores = {};
     for (const sel of leagueSel) {
       const bats = fixtureBatting[sel.fixture_id] || {};
+      const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
       let pts = 0;
       const teamA = Array.isArray(sel.team_a_ids) ? sel.team_a_ids : [];
       const teamB = Array.isArray(sel.team_b_ids) ? sel.team_b_ids : [];
-      for (const pid of [...teamA, ...teamB]) pts += playerPoints(bats[pid] || 0);
+      for (const pid of [...teamA, ...teamB]) {
+        pts += playerPoints(bats[pid] || 0);
+        pts += 30 * (wickets[pid] || 0);
+      }
       leagueScores[sel.user_id] = (leagueScores[sel.user_id] || 0) + pts;
     }
 
@@ -168,8 +202,9 @@ export default async function handler(req, res) {
       debugRuns[uid] = [];
       for (const sel of [...weeklySel, ...leagueSel].filter(s => s.user_id === uid)) {
         const map = fixtureBatting[sel.fixture_id] || {};
+        const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
         for (const pid of [...(sel.team_a_ids||[]), ...(sel.team_b_ids||[])]) {
-          debugRuns[uid].push({ fixture_id: sel.fixture_id, player_id: pid, runs: map[pid] || 0 });
+          debugRuns[uid].push({ fixture_id: sel.fixture_id, player_id: pid, runs: map[pid] || 0, wickets: wickets[pid] || 0 });
         }
       }
     }

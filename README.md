@@ -87,6 +87,7 @@ You can find these values in your [Supabase project settings](https://app.supaba
 - **Matches:** View upcoming and past matches, select players, and manage your fantasy team.
 - **Leaderboard:** Track your score and see how you rank against other users.
 - **Rules:** Read the game rules and scoring system.
+  See [Selections & Scoring](./docs/selections-scoring.mdx) for details.
 
 ## Customization
 

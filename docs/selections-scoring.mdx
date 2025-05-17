@@ -1,0 +1,28 @@
+export const meta = {
+  title: "Selections & Scoring",
+};
+
+# Selections & Scoring
+
+In the Fantasy Cricket app, users select up to **4 players** from each team (8 total) for each match.
+
+## Selection Logic
+
+- UI components responsible:
+  - `components/Matches.jsx`:
+    - `TodayMatchCard` component
+    - `SquadSelector` sub-component
+    - Functions: `handleSelectPlayer`, `handleSubmitSelection`
+
+## Scoring Criteria
+
+- **Batting** (`pages/api/run-leaderboard.js`):
+  - 50 points for a half-century (50+ runs)
+  - 150 points for a century (100+ runs)
+  - Implemented in helper: `playerPoints`
+
+- **Bowling** (`pages/api/run-leaderboard.js`):
+  - 30 points per wicket taken
+  - Aggregated via `mapWickets` logic
+
+Refer to the above files for full implementation details.
