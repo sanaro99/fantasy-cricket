@@ -158,18 +158,21 @@ export default async function handler(req, res) {
       leagueScores[sel.user_id] = (leagueScores[sel.user_id] || 0) + pts;
     }
 
-    // 7) Load user names
+    // 7) Load user profiles
     const userIds = Array.from(new Set([...Object.keys(weeklyScores), ...Object.keys(leagueScores)]));
-    let { data: users = [] } = await supabase
+    // Fetch user profiles from users table
+    const { data: profiles = [], error: profileError } = await supabase
       .from('users')
-      .select('id, first_name, last_name')
+      .select('id, full_name')
       .in('id', userIds);
+    let users = profiles || [];
+    // Fallback: if no profiles found, fetch from auth.users for emails
     if (users.length === 0) {
       const { data: authUsers = [] } = await supabase
         .from('auth.users')
         .select('id, email')
         .in('id', userIds);
-      users = authUsers;
+      users = authUsers.map(u => ({ id: u.id, full_name: u.email }));
     }
 
     // 8) Upsert weekly_leaderboard
@@ -177,7 +180,7 @@ export default async function handler(req, res) {
     const weeklyRows = users.map(u => ({
       week_start:   weekStartDate,
       user_id:      u.id,
-      user_name:    u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : (u.email || 'Unknown'),
+      user_name:    u.full_name || u.id,
       weekly_score: weeklyScores[u.id] || 0,
       rank:         null
     }));
@@ -188,7 +191,7 @@ export default async function handler(req, res) {
     // 9) Upsert league_leaderboard
     const leagueRows = users.map(u => ({
       user_id:     u.id,
-      user_name:   u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : (u.email || 'Unknown'),
+      user_name:   u.full_name || u.id,
       total_score: leagueScores[u.id] || 0,
       rank:        null
     }));
