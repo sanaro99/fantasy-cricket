@@ -133,12 +133,12 @@ export default function Matches() {
       key={fixture.id}
       className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform border border-navy-200/20 mb-6"
     >
-      <h2 className="text-lg font-semibold mb-3 text-navy-100 text-shadow-sm">
-        {fixture.round || "Match"}
+      <h2 className="text-xs font-semibold mb-3 text-navy-100 text-shadow-sm text-navy-200">
+        {fixture.round || "Fixture"}
       </h2>
       <div className="flex items-center justify-between mb-4">
         <div className="text-center">
-          <p className="font-bold uppercase text-lg text-white font-medium">
+          <p className="font-bold text-base text-white font-medium">
             {fixture.localteam.name}
           </p>
           <div className="mt-3 bg-navy-800/50 w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg">
@@ -150,13 +150,13 @@ export default function Matches() {
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <p className="text-sm text-navy-200 font-medium">Time</p>
-          <p className="font-bold text-2xl text-white mt-1">
+          <p className="text-sm text-navy-200 font-medium">vs</p>
+          {/* <p className="font-sm text-white mt-2">
             {new Date(fixture.starting_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </p>
+          </p> */}
         </div>
         <div className="text-center">
-          <p className="font-bold uppercase text-lg text-white font-medium">
+          <p className="font-bold text-base text-white font-medium">
             {fixture.visitorteam.name}
           </p>
           <div className="mt-3 bg-navy-800/50 w-16 h-16 mx-auto rounded-full flex items-center justify-center shadow-lg">
@@ -169,7 +169,7 @@ export default function Matches() {
         </div>
       </div>
       {fixture.note && (
-        <p className="text-navy-200 mt-3 font-medium">Note: {fixture.note}</p>
+        <p className="text-navy-200 mt-3 font-medium text-sm text-center">{fixture.note}</p>
       )}
     </div>
   );
@@ -620,16 +620,37 @@ export default function Matches() {
         }}
       >
         <main className="relative z-10 container mx-auto px-4 py-6">
-          {/* Today's Fixtures - Full Width */}
-          <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform mb-8">
-            <h2 className="text-xl font-semibold text-navy-100 mb-4 text-shadow-sm">Today's Match</h2>
-            {todayFixtures.length > 0 
-              ? todayFixtures.map(fixture => (
-                  <TodayMatchCard key={fixture.id} fixture={fixture} />
-                ))
-              : <p className="text-white font-medium">No matches found for today.</p>
-            }
-          </div>
+          <section className="grid grid-cols-1 md:grid-cols-[1fr_3fr_1fr] gap-6 mb-8">
+              {/* Yesterday's Fixtures */}
+              <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform border border-burgundy-200/20">
+                <h2 className="text-lg font-semibold mb-3 text-burgundy-100 text-shadow-sm">Yesterday's Fixtures</h2>
+                {yesterdayFixtures.length > 0 
+                  ? yesterdayFixtures.map(fixture => renderStaticFixtureCard(fixture))
+                  : <p className="text-white font-medium">No fixtures found for yesterday.</p>
+                }
+              </div>
+
+            {/* Today's Fixtures - Full Width */}
+            <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform mb-8">
+              <h2 className="text-xl font-semibold text-navy-100 mb-4 text-shadow-sm">Today's Fixtures</h2>
+              {todayFixtures.length > 0 
+                ? todayFixtures.map(fixture => (
+                    <TodayMatchCard key={fixture.id} fixture={fixture} />
+                  ))
+                : <p className="text-white font-medium">No fixtures found for today.</p>
+              }
+            </div>
+
+            {/* Tomorrow's Fixtures */}
+            <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform border border-burgundy-200/20">
+                <h2 className="text-lg font-semibold mb-3 text-burgundy-100 text-shadow-sm">Tomorrow's Fixtures</h2>
+                {tomorrowFixtures.length > 0 
+                  ? tomorrowFixtures.map(fixture => renderStaticFixtureCard(fixture))
+                  : <p className="text-white font-medium">No fixtures found for tomorrow.</p>
+                }
+              </div>
+          </section>
+
           {/* Selection & Scoring Section */}
           <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 mb-8 text-white">
             <h2 className="text-xl font-semibold mb-4 text-shadow-sm">Selection & Scoring</h2>
