@@ -17,6 +17,7 @@
         "cookie": "^1.0.2",
         "next": "latest",
         "react": "latest",
+        "react-datepicker": "^8.3.0",
         "react-dom": "latest",
         "tailwind-merge": "1.8.1",
         "tailwindcss": "3.3.2",

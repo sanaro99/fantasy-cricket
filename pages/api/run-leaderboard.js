@@ -20,12 +20,31 @@ export default async function handler(req, res) {
     const weekStartISO = lastSun.toISOString();
     const weekEndISO = nextSun.toISOString();
 
-    // 2) Fetch this week's selections
-    const { data: weeklySel = [] } = await supabase
+    // 2) Fetch this week's selections, filtered by fixture starting_at
+    const { data: allSelections = [] } = await supabase
       .from('player_selections')
-      .select('user_id,fixture_id,team_a_ids,team_b_ids')
-      .gte('created_at', weekStartISO)
-      .lt('created_at', weekEndISO);
+      .select('user_id,fixture_id,team_a_ids,team_b_ids');
+
+    // Fetch latest fixture cache for starting_at dates
+    const { data: cacheEntries = [] } = await supabase
+      .from('fixture_cache')
+      .select('fixtures')
+      .order('fetched_at', { ascending: false })
+      .limit(1);
+    const fixtureDateMap = {};
+    if (cacheEntries.length > 0) {
+      const fixturesArr = cacheEntries[0].fixtures.data || cacheEntries[0].fixtures;
+      fixturesArr.forEach(f => {
+        if (f.id != null && f.starting_at) {
+          fixtureDateMap[f.id] = f.starting_at;
+        }
+      });
+    }
+
+    const weeklySel = allSelections.filter(sel => {
+      const start = fixtureDateMap[sel.fixture_id];
+      return start && start >= weekStartISO && start < weekEndISO;
+    });
 
     // 3) Fetch ALL selections for league
     const { data: leagueSel = [] } = await supabase
@@ -41,16 +60,11 @@ export default async function handler(req, res) {
     );
 
     const apiToken = process.env.SPORTMONKS_API_TOKEN;
-    console.log("apiToken", apiToken);
+    // console.log("apiToken", apiToken);
 
     // 5) Fetch and map batting data per fixture
     const fixtureBatting = {};
     for (const fid of fixtureIds) {
-      // try {
-      //   const resp = await fetch(
-      //     `https://cricket.sportmonks.com/api/v2.0/fixtures/${fid}?include=batting.batsman&api_token=${process.env.SPORTSMONKS_API_TOKEN}`
-      //   );
-
       try{
       const baseUrl = 'https://cricket.sportmonks.com/api/v2.0/fixtures/'+fid;
       // Fetch batting stats
@@ -72,7 +86,7 @@ export default async function handler(req, res) {
       let battingArr = [];
       if (Array.isArray(jsonBat.data.batting)) {
         battingArr = jsonBat.data.batting;
-        console.log(battingArr);
+        // console.log(battingArr);
       } else if (
         jsonBat.data.batting &&
         Array.isArray(jsonBat.data.batting.data)
@@ -127,34 +141,32 @@ export default async function handler(req, res) {
       }
     }
 
-    // Helper: points by runs
-    const playerPoints = runs => runs >= 100 ? 150 : runs >= 50 ? 50 : 0;
+    // Points calculation helpers
+    function playerPoints(runs) {
+      return runs >= 100 ? 150 : runs >= 50 ? 50 : 0;
+    }
+    function calculateSelectionPoints(sel, fixtureBatting) {
+      const bats = fixtureBatting[sel.fixture_id] || {};
+      const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
+      let pts = 0;
+      const teamA = Array.isArray(sel.team_a_ids) ? sel.team_a_ids : [];
+      const teamB = Array.isArray(sel.team_b_ids) ? sel.team_b_ids : [];
+      for (const pid of [...teamA, ...teamB]) {
+        pts += playerPoints(bats[pid] || 0);
+        pts += 30 * (wickets[pid] || 0);
+      }
+      return pts;
+    }
 
     // 6) Aggregate scores
     const weeklyScores = {};
     for (const sel of weeklySel) {
-      const bats = fixtureBatting[sel.fixture_id] || {};
-      const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
-      let pts = 0;
-      const teamA = Array.isArray(sel.team_a_ids) ? sel.team_a_ids : [];
-      const teamB = Array.isArray(sel.team_b_ids) ? sel.team_b_ids : [];
-      for (const pid of [...teamA, ...teamB]) {
-        pts += playerPoints(bats[pid] || 0);
-        pts += 30 * (wickets[pid] || 0);
-      }
+      const pts = calculateSelectionPoints(sel, fixtureBatting);
       weeklyScores[sel.user_id] = (weeklyScores[sel.user_id] || 0) + pts;
     }
     const leagueScores = {};
     for (const sel of leagueSel) {
-      const bats = fixtureBatting[sel.fixture_id] || {};
-      const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
-      let pts = 0;
-      const teamA = Array.isArray(sel.team_a_ids) ? sel.team_a_ids : [];
-      const teamB = Array.isArray(sel.team_b_ids) ? sel.team_b_ids : [];
-      for (const pid of [...teamA, ...teamB]) {
-        pts += playerPoints(bats[pid] || 0);
-        pts += 30 * (wickets[pid] || 0);
-      }
+      const pts = calculateSelectionPoints(sel, fixtureBatting);
       leagueScores[sel.user_id] = (leagueScores[sel.user_id] || 0) + pts;
     }
 
@@ -199,6 +211,35 @@ export default async function handler(req, res) {
       .from('league_leaderboard')
       .upsert(leagueRows, { onConflict: ['user_id'] });
 
+    // 10) Upsert daily_leaderboard for each fixture date based on starting_at
+    const uniqueDates = Array.from(new Set(
+      fixtureIds
+        .map(fid => fixtureDateMap[fid]?.slice(0,10))
+        .filter(Boolean)
+    ));
+    let totalDailyRows = [];
+    for (const dateStr of uniqueDates) {
+      const selForDate = allSelections.filter(
+        sel => fixtureDateMap[sel.fixture_id]?.slice(0,10) === dateStr
+      );
+      const dailyScoresDate = {};
+      for (const sel of selForDate) {
+        const pts = calculateSelectionPoints(sel, fixtureBatting);
+        dailyScoresDate[sel.user_id] = (dailyScoresDate[sel.user_id] || 0) + pts;
+      }
+      const dailyRowsDate = users.map(u => ({
+        date: dateStr,
+        user_id: u.id,
+        user_name: u.full_name || u.id,
+        daily_score: dailyScoresDate[u.id] || 0,
+        rank: null
+      }));
+      totalDailyRows.push(...dailyRowsDate);
+      await supabase
+        .from('daily_leaderboard')
+        .upsert(dailyRowsDate, { onConflict: ['date','user_id'] });
+    }
+
     // 10) Debug output for runs
     const debugRuns = {};
     for (const uid of userIds) {
@@ -218,8 +259,10 @@ export default async function handler(req, res) {
       usersProcessed: userIds.length,
       weeklyRowsInserted: weeklyRows.length,
       leagueRowsUpserted: leagueRows.length,
+      dailyRowsUpserted: totalDailyRows.length,
       debugWeekly: weeklyRows,
       debugLeague: leagueRows,
+      debugDaily: totalDailyRows,
       debugRuns
     });
   } catch (err) {
