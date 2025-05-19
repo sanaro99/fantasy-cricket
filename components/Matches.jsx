@@ -189,6 +189,10 @@ export default function Matches() {
     const [currentUser, setCurrentUser] = useState(null);
     const [isLocked, setIsLocked] = useState(new Date() >= new Date(fixture.starting_at));
     const [overrideEnabled, setOverrideEnabled] = useState(false);
+    const [summary, setSummary] = useState('');
+    const [loadingSummary, setLoadingSummary] = useState(true);
+    const [errorSummary, setErrorSummary] = useState('');
+    const [showFullSummary, setShowFullSummary] = useState(false);
 
     // Fetch current user from Supabase client (no API call)
     useEffect(() => {
@@ -283,6 +287,25 @@ export default function Matches() {
       }
       fetchSquads();
     }, [currentUser, userSelection, fixture]);
+
+    // Fetch AI summary
+    useEffect(() => {
+      async function fetchAISummary() {
+        setLoadingSummary(true);
+        try {
+          const res = await fetch(`/api/ai-summary?fixture_id=${fixture.id}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error fetching AI summary');
+          setSummary(data.summary);
+        } catch (err) {
+          console.error('Error fetching AI summary:', err);
+          setErrorSummary(err.message);
+        } finally {
+          setLoadingSummary(false);
+        }
+      }
+      fetchAISummary();
+    }, [fixture.id]);
 
     // Now selecting full player objects
     const handleSelectPlayer = async (team, player) => {
@@ -406,6 +429,17 @@ export default function Matches() {
       
       return (
         <div className="p-4 text-white">
+          <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
+            <h4 className="font-semibold text-white mb-2">AI Fixture Summary</h4>
+            {loadingSummary ? <p className="text-white/70">Generating AI summary...</p> : errorSummary ? <p className="text-red-500">Error: {errorSummary}</p> : (
+              <>
+                <div className={`text-white/90 break-words ${!showFullSummary ? 'max-h-28 overflow-hidden' : ''}`} dangerouslySetInnerHTML={{ __html: summary }} />
+                <button onClick={() => setShowFullSummary(prev => !prev)} className="text-blue-500 mt-2">
+                  {showFullSummary ? 'Collapse full summary' : 'Show full summary'}
+                </button>
+              </>
+            )}
+          </div>
           <h3 className="text-xl font-semibold mb-4 text-shadow-sm">Your Selections</h3>
           
           <div className="bg-navy-100/30 backdrop-blur-sm rounded-lg border border-navy-500/20 p-4 mb-4">
@@ -460,6 +494,17 @@ export default function Matches() {
 
     return (
       <div className="p-4 text-white">
+        <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
+          <h4 className="font-semibold text-white mb-2 text-lg">AI Fixture Summary</h4>
+          {loadingSummary ? <p className="text-white/70">Generating AI summary...</p> : errorSummary ? <p className="text-red-500">Error: {errorSummary}</p> : (
+            <>
+              <div className={`text-white/90 break-words ${!showFullSummary ? 'max-h-28 overflow-hidden' : ''}`} dangerouslySetInnerHTML={{ __html: summary }} />
+              <button onClick={() => setShowFullSummary(prev => !prev)} className="text-blue-500 mt-2">
+                {showFullSummary ? 'Collapse full summary' : 'Show full summary'}
+              </button>
+            </>
+          )}
+        </div>
         <h3 className="text-xl font-semibold mb-4 text-shadow-sm">Select Players for {fixture.round}</h3>
         
         {/* Local Team Section */}
