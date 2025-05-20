@@ -95,16 +95,20 @@ export default async function handler(req, res) {
         console.log("In if condition...");
       }
 
-      // Map player_id -> total runs
+      // Map player_id -> total runs and sixes
       const map = {};
+      const sixesMap = {};
       for (const b of battingArr) {
         if (b && b.player_id != null) {
           const pid = Number(b.player_id);
           const runs = Number(b.score || 0);
           map[pid] = (map[pid] || 0) + runs;
+          const sixes = Number(b.six_x || 0);
+          sixesMap[pid] = (sixesMap[pid] || 0) + sixes;
         }
       }
       fixtureBatting[fid] = map;
+      fixtureBatting[`${fid}_sixes`] = sixesMap;
 
       // Fetch bowling stats
       const paramsBowl = new URLSearchParams({
@@ -143,20 +147,27 @@ export default async function handler(req, res) {
 
     // Points calculation helpers
     function playerPoints(runs) {
-      return runs >= 100 ? 150 : runs >= 50 ? 50 : 0;
+      if (runs >= 100) return 150;
+      if (runs >= 50) return 60;
+      if (runs >= 30) return 30;
+      return 0;
     }
     function calculateSelectionPoints(sel, fixtureBatting) {
       const bats = fixtureBatting[sel.fixture_id] || {};
       const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
+      const sixesMap = fixtureBatting[`${sel.fixture_id}_sixes`] || {};
       let pts = 0;
       const teamA = Array.isArray(sel.team_a_ids) ? sel.team_a_ids : [];
       const teamB = Array.isArray(sel.team_b_ids) ? sel.team_b_ids : [];
       for (const pid of [...teamA, ...teamB]) {
         pts += playerPoints(bats[pid] || 0);
         pts += 30 * (wickets[pid] || 0);
+        pts += 5 * (sixesMap[pid] || 0);
       }
       return pts;
     }
+
+
 
     // 6) Aggregate scores
     const weeklyScores = {};
@@ -247,8 +258,20 @@ export default async function handler(req, res) {
       for (const sel of [...weeklySel, ...leagueSel].filter(s => s.user_id === uid)) {
         const map = fixtureBatting[sel.fixture_id] || {};
         const wickets = fixtureBatting[`${sel.fixture_id}_wickets`] || {};
+        const sixesMap = fixtureBatting[`${sel.fixture_id}_sixes`] || {};
         for (const pid of [...(sel.team_a_ids||[]), ...(sel.team_b_ids||[])]) {
-          debugRuns[uid].push({ fixture_id: sel.fixture_id, player_id: pid, runs: map[pid] || 0, wickets: wickets[pid] || 0 });
+          // Try to get player name from users list (if player_id matches user_id, else leave blank)
+          let playerName = '';
+          // Optionally, you could build a playerId->name map if you have player data elsewhere
+          // For now, leave it blank unless you have a mapping
+          debugRuns[uid].push({
+            fixture_id: sel.fixture_id,
+            player_id: pid,
+            player_name: playerName,
+            runs: map[pid] || 0,
+            wickets: wickets[pid] || 0,
+            sixes: sixesMap[pid] || 0,
+          });
         }
       }
     }
