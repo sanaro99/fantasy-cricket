@@ -17,12 +17,17 @@ In the Fantasy Cricket app, users select up to **4 players** from each team (8 t
 ## Scoring Criteria
 
 - **Batting** (`pages/api/run-leaderboard.js`):
-  - 50 points for a half-century (50+ runs)
-  - 150 points for a century (100+ runs)
+  - 30 points for scoring 30+ runs
+  - 60 points for scoring 50+ runs
+  - 150 points for scoring 100+ runs
+  - Only the highest milestone is awarded per player (not cumulative)
   - Implemented in helper: `playerPoints`
 
 - **Bowling** (`pages/api/run-leaderboard.js`):
   - 30 points per wicket taken
   - Aggregated via `mapWickets` logic
+
+- **Sixes**:
+  - 5 points for each six hit by a player (using `six_x` from batting array)
 
 Refer to the above files for full implementation details.

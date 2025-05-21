@@ -85,9 +85,14 @@ You can find these values in your [Supabase project settings](https://app.supaba
 
 - **Authentication:** Users can sign up and log in using OTP-based authentication (email/password) or Google OAuth.
 - **Matches:** View upcoming and past matches, select players, and manage your fantasy team.
-- **Leaderboard:** Track your score and see how you rank against other users.
-- **Rules:** Read the game rules and scoring system.
+- **AI Fixture Summary:** Get an AI-generated summary for each fixture, including probable XI and pitch report, styled with the AuroraText effect for enhanced UI appeal.
+- **Leaderboard:** Track your score and see how you rank against other users. Leaderboards now use an optimized logic for scoring and debug output.
+- **Rules & Scoring:**
+  - Batting: 30 points for 30 runs, 60 points for 50 runs, 150 points for 100 runs (only highest milestone per player is awarded)
+  - Bowling: 30 points per wicket
+  - Sixes: 5 points per six hit
   See [Selections & Scoring](./docs/selections-scoring.mdx) for details.
+- **UI Enhancements:** The "AI Fixture Summary" heading uses the AuroraText effect for a modern look. Summaries are expandable/collapsible for better user experience.
 
 ## Customization
 

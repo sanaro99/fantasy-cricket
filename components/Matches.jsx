@@ -701,7 +701,7 @@ export default function Matches() {
             <h2 className="text-xl font-semibold mb-4 text-shadow-sm">Selection & Scoring</h2>
             <p className="mb-2">Select 4 players from each team (8 total) per match:</p>
             <ul className="list-disc list-inside ml-4 space-y-1">
-              <li>Batting: 50 points for half-century (50+ runs), 150 points for century (100+ runs)</li>
+              <li>Batting: 30 points for 30 runs, 60 points for half-century (50 runs), 150 points for century (100 runs), 5 points for each six hit</li>
               <li>Bowling: 30 points per wicket taken</li>
             </ul>
           </div>

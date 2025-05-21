@@ -99,7 +99,7 @@ export default function Rules() {
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Batting: <b>50 points</b> for a half-century (50+ runs), <b>150 points</b> for a century (100+ runs).</span>
+                      <span className="font-medium">Batting: <b>30 points</b> for a 30 runs, <b>60 points</b> for a half-century (50 runs), <b>150 points</b> for a century (100 runs). 5 points for each six hit.</span>
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
@@ -107,7 +107,7 @@ export default function Rules() {
                     </li>
                     <li className="flex items-start space-x-3">
                       <span className="text-[#FFD700] text-xl">•</span>
-                      <span className="font-medium">Track your score after every match—check the Leaderboard to see where you stand!</span>
+                      <span className="font-medium">Track your score after the match—check the Leaderboard to see where you stand!</span>
                     </li>
                   </ul>
                 </div>
