@@ -85,7 +85,11 @@ You can find these values in your [Supabase project settings](https://app.supaba
 
 - **Authentication:** Users can sign up and log in using OTP-based authentication (email/password) or Google OAuth.
 - **Matches:** View upcoming and past matches, select players, and manage your fantasy team.
-- **AI Fixture Summary:** Get an AI-generated summary for each fixture, including probable XI and pitch report, styled with the AuroraText effect for enhanced UI appeal.
+- **Dynamic AI Match Summary:** Get AI-generated insights that adapt to the match status:
+    - **Fixture Preview (Upcoming):** Provides a pre-match analysis, including probable XI, pitch report, players to watch, and key match-ups. The heading will be "AI Fixture Preview".
+    - **Live Match Pulse (Live):** During live matches, offers real-time updates on key events, momentum shifts, and standout performances (refreshes frequently). The heading changes to "AI Live Match Pulse".
+    - **Match Update (Starting Soon/Delayed):** For matches about to start or delayed, gives a quick update. Heading: "AI Match Update".
+    - **Match Report (Finished):** After completion, delivers a post-match analysis, highlighting key performances and the result. Heading: "AI Match Report".
 - **Leaderboard:** Track your score and see how you rank against other users. Leaderboards now use an optimized logic for scoring and debug output.
 - **Rules & Scoring:**
   - Batting: 30 points for 30 runs, 60 points for 50 runs, 150 points for 100 runs (only highest milestone per player is awarded)

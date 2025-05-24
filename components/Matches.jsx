@@ -190,9 +190,25 @@ export default function Matches() {
     const [isLocked, setIsLocked] = useState(new Date() >= new Date(fixture.starting_at));
     const [overrideEnabled, setOverrideEnabled] = useState(false);
     const [summary, setSummary] = useState('');
+    const [summaryStatusType, setSummaryStatusType] = useState('upcoming'); // New state for status type
     const [loadingSummary, setLoadingSummary] = useState(true);
     const [errorSummary, setErrorSummary] = useState('');
     const [showFullSummary, setShowFullSummary] = useState(false);
+
+    // Helper function for dynamic AI summary heading
+    const getAISummaryHeading = (statusType) => {
+      switch (statusType) {
+        case 'live':
+          return 'AI Live Match Pulse';
+        case 'finished':
+          return 'AI Match Report';
+        case 'starting_soon_or_delayed':
+          return 'AI Match Update';
+        case 'upcoming':
+        default:
+          return 'AI Fixture Preview';
+      }
+    };
 
     // Fetch current user from Supabase client (no API call)
     useEffect(() => {
@@ -292,17 +308,26 @@ export default function Matches() {
     useEffect(() => {
       async function fetchAISummary() {
         setLoadingSummary(true);
-        try {
-          const res = await fetch(`/api/ai-summary?fixture_id=${fixture.id}`);
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Error fetching AI summary');
-          setSummary(data.summary);
-        } catch (err) {
-          console.error('Error fetching AI summary:', err);
-          setErrorSummary(err.message);
-        } finally {
-          setLoadingSummary(false);
-        }
+        setErrorSummary(null);
+        fetch(`/api/ai-summary?fixture_id=${fixture.id}`)
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            setSummary(data.summary || 'No summary available.');
+            setSummaryStatusType(data.match_status_type || 'upcoming'); // Set status type from API
+            setLoadingSummary(false);
+          })
+          .catch(err => {
+            console.error("Failed to load AI summary:", err);
+            setErrorSummary(err.message);
+            setSummary('Failed to load summary.');
+            setSummaryStatusType('upcoming'); // Default on error
+            setLoadingSummary(false);
+          });
       }
       fetchAISummary();
     }, [fixture.id]);
@@ -430,7 +455,7 @@ export default function Matches() {
       return (
         <div className="p-4 text-white">
           <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
-            <h4 className="font-semibold text-white mb-2">AI Fixture Summary</h4>
+            <h4 className="font-semibold text-white mb-2">{getAISummaryHeading(summaryStatusType)}</h4>
             {loadingSummary ? <p className="text-white/70">Generating AI summary...</p> : errorSummary ? <p className="text-red-500">Error: {errorSummary}</p> : (
               <>
                 <div className={`text-white/90 break-words ${!showFullSummary ? 'max-h-28 overflow-hidden' : ''}`} dangerouslySetInnerHTML={{ __html: summary }} />
@@ -451,7 +476,7 @@ export default function Matches() {
                   {userSelection.team_a_names?.map((playerName, index) => (
                     <div key={index} className="flex items-center bg-navy-500/30 rounded-lg p-2">
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 mr-3">
-                        <img 
+                        <img
                           src={getPlayerImagePath(playerName, 'local')} 
                           alt={playerName}
                           className="w-full h-full object-cover"
@@ -495,7 +520,7 @@ export default function Matches() {
     return (
       <div className="p-4 text-white">
         <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
-          <h4 className="font-semibold text-white mb-2 text-lg">AI Fixture Summary</h4>
+          <h4 className="font-semibold text-white mb-2">{getAISummaryHeading(summaryStatusType)}</h4>
           {loadingSummary ? <p className="text-white/70">Generating AI summary...</p> : errorSummary ? <p className="text-red-500">Error: {errorSummary}</p> : (
             <>
               <div className={`text-white/90 break-words ${!showFullSummary ? 'max-h-28 overflow-hidden' : ''}`} dangerouslySetInnerHTML={{ __html: summary }} />
