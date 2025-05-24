@@ -672,10 +672,11 @@ export default function Matches() {
 
   return (
     <div className="min-h-screen relative font-sans">
-      <div className="w-full object-cover relative min-h-[40vh] max-h-[60vh]" style={{marginTop: '-5rem'}}>
+      <div className="min-h-[40vh] max-h-[60vh]" style={{marginTop: '-5rem'}}>
         <img
           src="/images/game-banner.png"
           alt="Game banner"
+          className="w-full h-full object-cover"
         />
       </div>
 
