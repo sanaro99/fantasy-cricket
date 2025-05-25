@@ -41,36 +41,31 @@ export default function Matches() {
 
         const res = await fetch('/api/fixtures');
         const data = await res.json();
-        
-        if (!data || !data.data) {
-          throw new Error('Invalid response format');
-        }
-
         const fixtures = data.data || [];
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
         const tomorrow = new Date(today);
         tomorrow.setDate(today.getDate() + 1);
-
         const formatDate = (date) => date.toISOString().slice(0, 10);
-        
+
         const yFixtures = fixtures.filter(fixture => 
           new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(yesterday)
         );
-        
         const tFixtures = fixtures.filter(fixture => 
           new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(today)
         );
-        
         const tmFixtures = fixtures.filter(fixture => 
           new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(tomorrow)
         );
 
+        // Sort fixtures by start time ascending
+        yFixtures.sort((a,b) => new Date(a.starting_at) - new Date(b.starting_at));
+        tFixtures.sort((a,b) => new Date(a.starting_at) - new Date(b.starting_at));
+        tmFixtures.sort((a,b) => new Date(a.starting_at) - new Date(b.starting_at));
         setYesterdayFixtures(yFixtures);
         setTodayFixtures(tFixtures);
         setTomorrowFixtures(tmFixtures);
-        
       } catch (err) {
         setError(err.message);
       } finally {
@@ -82,51 +77,6 @@ export default function Matches() {
 
   if (checkingAuth) return null;
 
-    async function fetchFixtures() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const res = await fetch('/api/fixtures');
-        const data = await res.json();
-        
-        if (!data || !data.data) {
-          throw new Error('Invalid response format');
-        }
-
-        const fixtures = data.data || [];
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
-
-        const formatDate = (date) => date.toISOString().slice(0, 10);
-        
-        const yFixtures = fixtures.filter(fixture => 
-          new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(yesterday)
-        );
-        
-        const tFixtures = fixtures.filter(fixture => 
-          new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(today)
-        );
-        
-        const tmFixtures = fixtures.filter(fixture => 
-          new Date(fixture.starting_at).toISOString().slice(0, 10) === formatDate(tomorrow)
-        );
-
-        setYesterdayFixtures(yFixtures);
-        setTodayFixtures(tFixtures);
-        setTomorrowFixtures(tmFixtures);
-        
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    // (no-op: moved fetchFixtures to above, effect now uses [checkingAuth] as dependency)
   // Helper for rendering static fixture cards (yesterday and tomorrow)
   const renderStaticFixtureCard = (fixture) => (
     <div
@@ -215,9 +165,24 @@ export default function Matches() {
       async function fetchUser() {
         const { data: { user } } = await supabase.auth.getUser();
         setCurrentUser(user || null);
+
+        // Make isLocked reactive
+        const checkLockStatus = () => {
+          const currentlyLocked = new Date() >= new Date(fixture.starting_at);
+          if (currentlyLocked !== isLockedRef.current) {
+            setIsLocked(currentlyLocked);
+            isLockedRef.current = currentlyLocked; // Keep ref in sync
+          }
+        };
+
+        const isLockedRef = { current: new Date() >= new Date(fixture.starting_at) }; // Use a ref to avoid stale closure in interval
+        setIsLocked(isLockedRef.current); // Initial set
+
+        const intervalId = setInterval(checkLockStatus, 30000); // Check every 30 seconds
+        return () => clearInterval(intervalId);
       }
       fetchUser();
-    }, []);
+    }, [fixture.starting_at]); // Dependency on fixture.starting_at
 
     // Check if user already submitted selection for this fixture
     useEffect(() => {
@@ -455,6 +420,17 @@ export default function Matches() {
       return (
         <div className="p-4 text-white">
           <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-center">
+                <p className="font-bold text-base text-white">{fixture.localteam.name}</p>
+                <img src={fixture.localteam.image_path} alt={fixture.localteam.name} className="w-10 h-10 object-contain mx-auto" />
+              </div>
+              <p className="text-white/70 font-semibold">vs</p>
+              <div className="text-center">
+                <p className="font-bold text-base text-white">{fixture.visitorteam.name}</p>
+                <img src={fixture.visitorteam.image_path} alt={fixture.visitorteam.name} className="w-10 h-10 object-contain mx-auto" />
+              </div>
+            </div>
             <h4 className="font-semibold text-white mb-2">{getAISummaryHeading(summaryStatusType)}</h4>
             {loadingSummary ? <p className="text-white/70">Generating AI summary...</p> : errorSummary ? <p className="text-red-500">Error: {errorSummary}</p> : (
               <>
@@ -465,7 +441,7 @@ export default function Matches() {
               </>
             )}
           </div>
-          <h3 className="text-xl font-semibold mb-4 text-shadow-sm">Your Selections</h3>
+          <h4 className="text-lg font-semibold mb-4 text-shadow-sm">Your Selections</h4>
           
           <div className="bg-navy-100/30 backdrop-blur-sm rounded-lg border border-navy-500/20 p-4 mb-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -511,15 +487,27 @@ export default function Matches() {
             </div>
           </div>
           
-          <p className="italic text-navy-200 text-center font-medium">Selections are locked for this match.</p>
+          <p className="italic text-navy-200 text-center font-medium">Your selections are locked for this match.</p>
         </div>
       );
     }
     if (!squadLoaded) return <div className="p-4 text-white"><p>Loading squads...</p></div>;
 
+    const isSelectionAllowed = (!isLocked || overrideEnabled);
     return (
       <div className="p-4 text-white">
         <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-center">
+              <p className="font-bold text-base text-white">{fixture.localteam.name}</p>
+              <img src={fixture.localteam.image_path} alt={fixture.localteam.name} className="w-10 h-10 object-contain mx-auto" />
+            </div>
+            <p className="text-white/70 font-semibold">vs</p>
+            <div className="text-center">
+              <p className="font-bold text-base text-white">{fixture.visitorteam.name}</p>
+              <img src={fixture.visitorteam.image_path} alt={fixture.visitorteam.name} className="w-10 h-10 object-contain mx-auto" />
+            </div>
+          </div>
           <h4 className="font-semibold text-white mb-2">{getAISummaryHeading(summaryStatusType)}</h4>
           {loadingSummary ? <p className="text-white/70">Generating AI summary...</p> : errorSummary ? <p className="text-red-500">Error: {errorSummary}</p> : (
             <>
@@ -530,7 +518,7 @@ export default function Matches() {
             </>
           )}
         </div>
-        <h3 className="text-xl font-semibold mb-4 text-shadow-sm">Select Players for {fixture.round}</h3>
+        {isSelectionAllowed && <h4 className="text-lg font-semibold mb-4 text-shadow-sm">Select Players for {fixture.round}</h4>}
         
         {/* Local Team Section */}
         <div className="mb-4 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden">
@@ -539,6 +527,7 @@ export default function Matches() {
             squad={localSquad}
             selectedPlayers={localSelected}
             onSelectPlayer={(player) => handleSelectPlayer('local', player)}
+            isSelectionAllowed={isSelectionAllowed}
           />
         </div>
         
@@ -549,6 +538,7 @@ export default function Matches() {
             squad={visitorSquad}
             selectedPlayers={visitorSelected}
             onSelectPlayer={(player) => handleSelectPlayer('visitor', player)}
+            isSelectionAllowed={isSelectionAllowed}
           />
         </div>
         
@@ -589,7 +579,7 @@ export default function Matches() {
           </div>
         </div>
         
-        <button
+        {isSelectionAllowed && <button
           onClick={handleSubmitSelection}
           disabled={submitting || (!overrideEnabled && isLocked) || localSelected.length !== 4 || visitorSelected.length !== 4}
           className={`mt-4 w-full py-3 rounded-lg transform hover:scale-[1.02] transition-all shadow-lg ${
@@ -599,84 +589,108 @@ export default function Matches() {
            }`}
         >
           {submitting ? 'Submitting...' : `Submit Selection (${localSelected.length + visitorSelected.length}/8)`}
-        </button>
+        </button>}
+        {!isSelectionAllowed && (
+          <div className="mt-4 p-3 bg-yellow-800/30 text-yellow-300 border border-yellow-700 rounded-lg text-center">
+            <p className="font-semibold">Player selection is locked as the match has started.</p>
+            {overrideEnabled && <p className="text-sm text-yellow-200 mt-1">Override active: You can make selections.</p>}
+            {/* {!overrideEnabled && <p className="text-sm text-yellow-200 mt-1">Selections will unlock if an admin override is activated.</p>} */}
+          </div>
+        )}
       </div>
     );
   }
 
   // SquadSelector component for expandable team sections
-  function SquadSelector({ teamName, squad, selectedPlayers, onSelectPlayer }) {
-    const [isExpanded, setIsExpanded] = useState(false);
+  function SquadSelector({
+    teamName, squad, selectedPlayers, onSelectPlayer, isSelectionAllowed
+  }) {
+
+    const [isExpanded, setIsExpanded] = useState(false); 
     
     return (
-      <>
+      <div className="bg-navy-800/50 p-3 rounded-lg">
         <button 
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full flex items-center justify-between p-4 text-left bg-navy-900/50 hover:bg-navy-900/70 transition-colors"
+          className="w-full flex justify-between items-center text-left text-white font-semibold py-2 px-1 rounded hover:bg-navy-700/70 transition-colors"
         >
           <div className="flex items-center">
             <span className="font-semibold text-shadow-sm">{teamName}</span>
-            <span className="ml-2 text-sm text-white/70 font-medium">
+            {isSelectionAllowed && <span className="ml-2 text-sm text-white/70 font-medium">
               {selectedPlayers.length}/4 selected
-            </span>
+            </span>}
           </div>
           <div className="flex items-center">
-            {selectedPlayers.map(player => (
-              <div key={player.id} className="w-6 h-6 -ml-2 first:ml-0 rounded-full overflow-hidden border border-white/20">
-                <img 
-                  src={player.image_path} 
-                  alt={player.fullname} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
+            {/* Mini previews of selected players in collapsed header - keep if desired, or simplify */} 
+            {!isExpanded && selectedPlayers.slice(0, 4).map(player => (
+              <img key={player.id} src={player.image_path} alt={player.fullname} className="w-5 h-5 rounded-full -ml-1 border-2 border-navy-800/50 object-cover" />
             ))}
-            <svg 
-              xmlns="http://www.w3.org/2000/svg" 
-              className={`w-5 h-5 ml-2 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`} 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <span className={`ml-2 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white/80"><path d="M13.0448 5.30836C12.9188 5.18236 12.742 5.11098 12.5588 5.11098C12.3755 5.11098 12.1988 5.18236 12.0728 5.30836L7.99976 9.3749L3.92676 5.30836C3.79956 5.18306 3.62256 5.11211 3.43976 5.1127C3.25696 5.11329 3.08056 5.18524 2.95476 5.31136C2.82896 5.43748 2.75919 5.61381 2.75919 5.79661C2.75919 5.97941 2.82896 6.15574 2.95476 6.28186L7.52076 10.8479C7.58338 10.9103 7.65706 10.9604 7.73816 10.9962C7.81926 11.032 7.90646 11.0529 7.99476 11.0579C8.08306 11.063 8.17206 11.0526 8.25656 11.0272C8.34106 11.0018 8.41956 10.962 8.48876 10.9099L13.0528 6.28186C13.1788 6.15586 13.2498 5.97904 13.2498 5.79586C13.2498 5.61267 13.1788 5.43586 13.0528 5.30986L13.0448 5.30836Z" fill="currentColor"/></svg>
+            </span>
           </div>
         </button>
-        
+
         {isExpanded && (
-          <div className="p-4 bg-black/60">
-            <div className="flex flex-wrap gap-2">
-              {squad.map(player => (
+          <div className="mt-3 flex flex-wrap gap-2 items-center py-2">
+            {squad.length > 0 ? squad.map(player => {
+              const playerIsSelected = selectedPlayers.find(p => p.id === player.id);
+              const teamIsFull = selectedPlayers.length >= 4;
+
+              // Determine if the button should be functionally disabled
+              const buttonShouldBeDisabled = 
+                (!isSelectionAllowed && !playerIsSelected) || // Can't select new if locked and not already selected
+                (isSelectionAllowed && teamIsFull && !playerIsSelected); // Can't select new if team full & selection allowed & not selected
+
+              let buttonClasses = "px-2.5 py-1.5 rounded-full text-xs transition-all flex items-center focus:outline-none focus:ring-2 focus:ring-opacity-50 shadow ";
+              
+              if (playerIsSelected) {
+                buttonClasses += "bg-gradient-to-r from-green-500 to-emerald-600 text-white ring-green-300 scale-105 font-medium ";
+              } else {
+                buttonClasses += "bg-navy-600/70 text-navy-100 hover:bg-navy-500/80 ring-navy-500/60 ";
+              }
+
+              if (!isSelectionAllowed && !playerIsSelected) {
+                buttonClasses += "opacity-40 cursor-not-allowed ";
+              } else if (isSelectionAllowed && teamIsFull && !playerIsSelected) {
+                buttonClasses += "opacity-50 cursor-not-allowed ";
+              } else if (!isSelectionAllowed && playerIsSelected) { // Locked but selected, make it non-interactive for deselection
+                buttonClasses += "cursor-default ";
+              }
+
+              return (
                 <button
                   key={player.id}
-                  onClick={() => onSelectPlayer(player)}
-                  className={`px-3 py-1.5 rounded-full text-xs transition-all flex items-center ${
-                    selectedPlayers.find(p => p.id === player.id)
-                      ? 'bg-navy-600 text-white shadow-lg scale-105'
-                      : 'bg-navy-400/70 text-navy-100 hover:bg-navy-500/70'
-                  } ${selectedPlayers.length >= 4 && !selectedPlayers.find(p => p.id === player.id) ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={selectedPlayers.length >= 4 && !selectedPlayers.find(p => p.id === player.id)} >
+                  onClick={() => {
+                    if (isSelectionAllowed) {
+                      onSelectPlayer(player);
+                    }
+                  }}
+                  disabled={buttonShouldBeDisabled || (!isSelectionAllowed && playerIsSelected) }
+                  className={buttonClasses}
+                  title={player.fullname}
+                >
                   <img 
                     src={player.image_path} 
                     alt={player.fullname} 
-                    className="w-6 h-6 rounded-full mr-1.5 object-cover"
+                    className="w-5 h-5 rounded-full mr-1.5 object-cover border border-white/10"
                   />
-                  <span className="font-medium">{player.fullname}</span>
+                  <span className="truncate max-w-[100px]">{player.fullname}</span>
                 </button>
-              ))}
-            </div>
+              );
+            }) : <p className="text-white/70 text-xs px-1">Squad not available for this team.</p>}
           </div>
         )}
-      </>
+      </div>
     );
   }
 
   return (
     <div className="min-h-screen relative font-sans">
-      <div className="min-h-[40vh] max-h-[60vh]" style={{marginTop: '-5rem'}}>
+      <div className="w-full object-cover relative min-h-[40vh] max-h-[60vh]" style={{marginTop: '-5rem'}}>
         <img
           src="/images/game-banner.png"
           alt="Game banner"
-          className="w-full h-full object-cover"
         />
       </div>
 
