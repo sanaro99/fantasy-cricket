@@ -36,6 +36,8 @@ const getMatchStatusAndCachePolicy = (fixture) => {
     cacheDurationMinutes = 60;
   }
 
+  console.log(`Match status: ${statusType}, cache duration: ${cacheDurationMinutes} minutes`);
+
   return { statusType, cacheDurationMinutes };
 };
 
@@ -72,7 +74,7 @@ export default async function handler(req, res) {
     const fixturesArr = fixtureCacheRows[0].fixtures.data || fixtureCacheRows[0].fixtures;
     const fixture = fixturesArr.find(f => f.id === fixtureId);
     if (!fixture) {
-      return res.status(404).json({ error: 'Fixture not found in cache' });
+      return res.status(404).json({ error: 'Fixture not found in cache. Running API to update cache.' });
     }
 
     const { statusType, cacheDurationMinutes } = getMatchStatusAndCachePolicy(fixture);
@@ -95,7 +97,7 @@ export default async function handler(req, res) {
 
     switch (statusType) {
       case 'live':
-        promptContent = `Provide a LIVE match pulse for the cricket game between ${teamA} and ${teamB}. ${fixtureNote} Focus on key events, current momentum, turning points, and standout player performances so far. Do not give the current score, however you may use the current score for your analysis.`;
+        promptContent = `Provide a LIVE match pulse for the cricket game between ${teamA} and ${teamB}. ${fixtureNote} Focus on key events, current momentum, turning points, and standout player performances so far. Do not give the exact score, however you may use the score for general updates.`;
         break;
       case 'finished':
         promptContent = `Generate a post-match analysis for the cricket game between ${teamA} and ${teamB}. ${fixtureNote} Highlight key performances, the final result, and its impact.`;
@@ -109,7 +111,7 @@ export default async function handler(req, res) {
         break;
     }
 
-    const prompt = `${promptContent} Use compelling hooks, concise yet vivid language, and a natural flow that maintains interest. Include subtle curiosity builders, varied sentence structures, and a conversational tone where appropriate. Provide only the requested output without any additional text, explanations, or formatting notes. Do not include phrases like 'Here is,' 'Sure,' or any other introductory or concluding remarks. Output only the HTML fragment for the summary content (no markdown, no code fences, and absolutely do NOT include <html>, <head>, <body>, or <!DOCTYPE html> tags or any wrapping HTML document structure). Use up to <h4> tags. For styling, apply Tailwind CSS classes: headings use 'text-white font-semibold text-base mb-2', subheadings use 'text-white font-medium text-base mt-4', paragraphs use 'text-white/90 text-sm mt-2', and lists use <ul class="list-disc list-inside ml-4 text-white/90"> with <li class="mb-1"> elements.`;
+    const prompt = `${promptContent} Use compelling hooks, concise yet vivid language, and a natural flow that maintains interest. Use varied sentence structures and a conversational tone where appropriate. Provide only the requested output without any additional text, explanations, or formatting notes. Do not include phrases like 'Here is,' 'Sure,' or any other introductory or concluding remarks. Output only the HTML fragment for the summary content (no markdown, no code fences, and absolutely do NOT include <html>, <head>, <body>, or <!DOCTYPE html> tags or any wrapping HTML document structure). Use up to <h4> tags. For styling, apply Tailwind CSS classes: headings use 'text-white font-semibold text-base mb-2', subheadings use 'text-white font-medium text-base mt-4', paragraphs use 'text-white/90 text-sm mt-2', and lists use <ul class="list-disc list-inside ml-4 text-white/90"> with <li class="mb-1"> elements.`;
 
     // Call Gemini API
     try {
@@ -118,7 +120,7 @@ export default async function handler(req, res) {
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
-          temperature: 0.7
+          temperature: 0.5
         }
       });
     
@@ -139,7 +141,7 @@ export default async function handler(req, res) {
       summary = summary.replace(/<meta[^>]*>/gi, '');
       summary = summary.replace(/<link[^>]*>/gi, '');
 
-      // upsert cache as before, now including match_status_type
+      // upsert cache
       await supabase
         .from("cache_ai_summary")
         .upsert(

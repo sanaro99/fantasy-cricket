@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     if (cacheEntries?.length > 0) {
       const cached = cacheEntries[0];
       const age = new Date() - new Date(cached.fetched_at);
-      if (age < 1000 * 60 * 60) {
+      if (age < 100 * 60 * 60) {
         console.log(`Using cached fixtures, age ${age}ms`);
         return res.status(200).json(cached.fixtures);
       }
