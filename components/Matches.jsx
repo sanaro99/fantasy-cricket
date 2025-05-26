@@ -81,7 +81,7 @@ export default function Matches() {
   const renderStaticFixtureCard = (fixture) => (
     <div
       key={fixture.id}
-      className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform border border-navy-200/20 mb-6"
+      className="bg-black/40 backdrop-blur-md rounded-3xl shadow-xl p-5 transform hover:scale-[1.005] transition-transform border border-navy-200/20 mb-6"
     >
       <h2 className="text-xs font-semibold mb-3 text-navy-100 text-shadow-sm text-navy-200">
         {fixture.round || "Fixture"}
@@ -131,7 +131,6 @@ export default function Matches() {
     const [errorSelection, setErrorSelection] = useState("");
     const [localSquad, setLocalSquad] = useState([]);
     const [visitorSquad, setVisitorSquad] = useState([]);
-    // Now hold full player objects for id+name
     const [localSelected, setLocalSelected] = useState([]);
     const [visitorSelected, setVisitorSelected] = useState([]);
     const [submitting, setSubmitting] = useState(false);
@@ -140,7 +139,7 @@ export default function Matches() {
     const [isLocked, setIsLocked] = useState(new Date() >= new Date(fixture.starting_at));
     const [overrideEnabled, setOverrideEnabled] = useState(false);
     const [summary, setSummary] = useState('');
-    const [summaryStatusType, setSummaryStatusType] = useState('upcoming'); // New state for status type
+    const [summaryStatusType, setSummaryStatusType] = useState('upcoming');
     const [loadingSummary, setLoadingSummary] = useState(true);
     const [errorSummary, setErrorSummary] = useState('');
     const [showFullSummary, setShowFullSummary] = useState(false);
@@ -160,7 +159,7 @@ export default function Matches() {
       }
     };
 
-    // Fetch current user from Supabase client (no API call)
+    // Fetch current user from Supabase client
     useEffect(() => {
       async function fetchUser() {
         const { data: { user } } = await supabase.auth.getUser();
@@ -297,7 +296,7 @@ export default function Matches() {
       fetchAISummary();
     }, [fixture.id]);
 
-    // Now selecting full player objects
+    // Select player objects
     const handleSelectPlayer = async (team, player) => {
       // refresh override status
       let oe = overrideEnabled;
@@ -332,7 +331,7 @@ export default function Matches() {
       // refresh override status
       let oe = overrideEnabled;
       try {
-        // Fetch the latest lock override status from Supabase
+        // Fetch the latest selection lock override status from Supabase
         const { data, error } = await supabase
           .from('selection_lock_override')
           .select('enabled')
@@ -414,13 +413,13 @@ export default function Matches() {
       const getPlayerImagePath = (playerName, teamType) => {
         const squad = teamType === 'local' ? localSquad : visitorSquad;
         const player = squad.find(p => p.fullname === playerName);
-        return player?.image_path || '/images/player-placeholder.png';
+        return player?.image_path || '/images/player-placeholder.jpg';
       };
       
       return (
-        <div className="p-4 text-white">
-          <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
-            <div className="flex items-center justify-between mb-3">
+        <div className="p-2 text-white">
+          <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-3xl border border-navy-500/20">
+            <div className="flex items-center justify-between mb-3 p-2">
               <div className="text-center">
                 <p className="font-bold text-base text-white">{fixture.localteam.name}</p>
                 <img src={fixture.localteam.image_path} alt={fixture.localteam.name} className="w-10 h-10 object-contain mx-auto" />
@@ -443,23 +442,23 @@ export default function Matches() {
           </div>
           <h4 className="text-lg font-semibold mb-4 text-shadow-sm">Your Selections</h4>
           
-          <div className="bg-navy-100/30 backdrop-blur-sm rounded-lg border border-navy-500/20 p-4 mb-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-black/40 backdrop-blur-sm rounded-3xl border border-navy-500/20 p-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {/* Local Team Selection */}
               <div>
                 <h4 className="font-semibold text-[#FFD700] mb-2">{fixture.localteam.name}</h4>
                 <div className="flex flex-col space-y-2">
                   {userSelection.team_a_names?.map((playerName, index) => (
-                    <div key={index} className="flex items-center bg-navy-500/30 rounded-lg p-2">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 mr-3">
+                    <div key={index} className="flex items-center bg-navy-500/30 rounded-3xl p-2">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-navy-200/80 mr-3">
                         <img
                           src={getPlayerImagePath(playerName, 'local')} 
                           alt={playerName}
                           className="w-full h-full object-cover"
-                          onError={(e) => {e.target.src = '/images/player-placeholder.png'}}
+                          onError={(e) => {e.target.src = '/images/player-placeholder.jpg'}}
                         />
                       </div>
-                      <span className="font-medium">{playerName}</span>
+                      <span className="font-medium text-sm">{playerName}</span>
                     </div>
                   ))}
                 </div>
@@ -470,13 +469,13 @@ export default function Matches() {
                 <h4 className="font-semibold text-[#FFD700] mb-2">{fixture.visitorteam.name}</h4>
                 <div className="flex flex-col space-y-2">
                   {userSelection.team_b_names?.map((playerName, index) => (
-                    <div key={index} className="flex items-center bg-navy-500/30 rounded-lg p-2">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/20 mr-3">
+                    <div key={index} className="flex items-center bg-navy-500/30 rounded-3xl p-2">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-navy-200/80 mr-3">
                         <img 
                           src={getPlayerImagePath(playerName, 'visitor')} 
                           alt={playerName}
                           className="w-full h-full object-cover"
-                          onError={(e) => {e.target.src = '/images/player-placeholder.png'}}
+                          onError={(e) => {e.target.src = '/images/player-placeholder.jpg'}}
                         />
                       </div>
                       <span className="font-medium">{playerName}</span>
@@ -495,8 +494,8 @@ export default function Matches() {
 
     const isSelectionAllowed = (!isLocked || overrideEnabled);
     return (
-      <div className="p-4 text-white">
-        <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-lg border border-navy-500/20">
+      <div className="p-2 text-white">
+        <div className="mb-4 p-4 bg-black/40 backdrop-blur-md rounded-3xl border border-navy-500/20">
           <div className="flex items-center justify-between mb-3">
             <div className="text-center">
               <p className="font-bold text-base text-white">{fixture.localteam.name}</p>
@@ -521,7 +520,7 @@ export default function Matches() {
         {isSelectionAllowed && <h4 className="text-lg font-semibold mb-4 text-shadow-sm">Select Players for {fixture.round}</h4>}
         
         {/* Local Team Section */}
-        <div className="mb-4 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden">
+        <div className="mb-4 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden">
           <SquadSelector 
             teamName={fixture.localteam.name}
             squad={localSquad}
@@ -532,7 +531,7 @@ export default function Matches() {
         </div>
         
         {/* Visitor Team Section */}
-        <div className="mb-4 bg-black/40 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden">
+        <div className="mb-4 bg-black/40 backdrop-blur-sm rounded-3xl border border-white/10 overflow-hidden">
           <SquadSelector 
             teamName={fixture.visitorteam.name}
             squad={visitorSquad}
@@ -543,7 +542,7 @@ export default function Matches() {
         </div>
         
         {/* Selection Summary */}
-        <div className="mb-4 p-4 bg-black/40 backdrop-blur-sm rounded-lg border border-navy-500/20">
+        <div className="mb-4 p-4 bg-black/40 backdrop-blur-sm rounded-3xl border border-navy-500/20">
           <h4 className="font-semibold text-[#FFD700] mb-2 text-shadow-sm">Your Selections</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -582,7 +581,7 @@ export default function Matches() {
         {isSelectionAllowed && <button
           onClick={handleSubmitSelection}
           disabled={submitting || (!overrideEnabled && isLocked) || localSelected.length !== 4 || visitorSelected.length !== 4}
-          className={`mt-4 w-full py-3 rounded-lg transform hover:scale-[1.02] transition-all shadow-lg ${
+          className={`mt-4 w-full py-3 rounded-3xl transform hover:scale-[1.005] transition-all shadow-lg ${
             localSelected.length === 4 && visitorSelected.length === 4 && (overrideEnabled || !isLocked)
                ? 'bg-gradient-to-r from-navy-600 to-navy-700 text-white hover:from-navy-700 hover:to-navy-800'
                : 'bg-gray-500/50 text-white/70 cursor-not-allowed'
@@ -591,7 +590,7 @@ export default function Matches() {
           {submitting ? 'Submitting...' : `Submit Selection (${localSelected.length + visitorSelected.length}/8)`}
         </button>}
         {!isSelectionAllowed && (
-          <div className="mt-4 p-3 bg-yellow-800/30 text-yellow-300 border border-yellow-700 rounded-lg text-center">
+          <div className="mt-4 p-3 bg-yellow-800/30 text-yellow-300 border border-yellow-700 rounded-3xl text-center">
             <p className="font-semibold">Player selection is locked as the match has started.</p>
             {overrideEnabled && <p className="text-sm text-yellow-200 mt-1">Override active: You can make selections.</p>}
             {/* {!overrideEnabled && <p className="text-sm text-yellow-200 mt-1">Selections will unlock if an admin override is activated.</p>} */}
@@ -704,11 +703,11 @@ export default function Matches() {
           backgroundRepeat: 'no-repeat'
         }}
       >
-        <main className="relative z-10 container mx-auto px-4 py-6">
-          <section className="grid grid-cols-1 md:grid-cols-[1fr_3fr_1fr] gap-6 mb-8">
+        <main className="relative z-10 container mx-auto px-2 py-4">
+          <section className="grid grid-cols-1 md:grid-cols-[1fr_3fr_1fr] gap-2 mb-4">
               {/* Yesterday's Fixtures */}
-              <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform border border-burgundy-200/20">
-                <h2 className="text-lg font-semibold mb-3 text-burgundy-100 text-shadow-sm">Yesterday's Fixtures</h2>
+              <div className="bg-black/40 backdrop-blur-md rounded-3xl shadow-xl p-3 transform hover:scale-[1.005] transition-transform border border-burgundy-200/20">
+                <h2 className="text-lg font-semibold my-2 mx-3 text-burgundy-100 text-shadow-sm">Yesterday's Fixtures</h2>
                 {yesterdayFixtures.length > 0 
                   ? yesterdayFixtures.map(fixture => renderStaticFixtureCard(fixture))
                   : <p className="text-white font-medium">No fixtures found for yesterday.</p>
@@ -716,19 +715,19 @@ export default function Matches() {
               </div>
 
             {/* Today's Fixtures - Full Width */}
-            <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform mb-8">
-              <h2 className="text-xl font-semibold text-navy-100 mb-4 text-shadow-sm">Today's Fixtures</h2>
+            <div className="bg-black/40 backdrop-blur-md rounded-3xl shadow-xl p-2 transform hover:scale-[1.005] transition-transform">
+              <h2 className="text-xl font-semibold text-navy-100 my-2 mx-3 text-shadow-sm">Today's Fixtures</h2>
               {todayFixtures.length > 0 
                 ? todayFixtures.map(fixture => (
-                    <TodayMatchCard key={fixture.id} fixture={fixture} />
+                    <TodayMatchCard key={fixture.id} fixture={fixture}/>
                   ))
                 : <p className="text-white font-medium">No fixtures found for today.</p>
               }
             </div>
 
             {/* Tomorrow's Fixtures */}
-            <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 transform hover:scale-[1.02] transition-transform border border-burgundy-200/20">
-                <h2 className="text-lg font-semibold mb-3 text-burgundy-100 text-shadow-sm">Tomorrow's Fixtures</h2>
+            <div className="bg-black/40 backdrop-blur-md rounded-3xl shadow-xl p-3 transform hover:scale-[1.005] transition-transform border border-burgundy-200/20">
+                <h2 className="text-lg font-semibold my-2 mx-3 text-burgundy-100 text-shadow-sm">Tomorrow's Fixtures</h2>
                 {tomorrowFixtures.length > 0 
                   ? tomorrowFixtures.map(fixture => renderStaticFixtureCard(fixture))
                   : <p className="text-white font-medium">No fixtures found for tomorrow.</p>
@@ -737,7 +736,7 @@ export default function Matches() {
           </section>
 
           {/* Selection & Scoring Section */}
-          <div className="bg-black/40 backdrop-blur-md rounded-xl shadow-xl p-6 mb-8 text-white">
+          <div className="bg-black/40 backdrop-blur-md rounded-3xl shadow-xl p-6 mb-8 text-white">
             <h2 className="text-xl font-semibold mb-4 text-shadow-sm">Selection & Scoring</h2>
             <p className="mb-2">Select 4 players from each team (8 total) per match:</p>
             <ul className="list-disc list-inside ml-4 space-y-1">
