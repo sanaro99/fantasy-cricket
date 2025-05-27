@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import Navbar from '../components/Navbar';
+// import Navbar from '../components/Navbar';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
@@ -39,9 +39,9 @@ export default function Rules() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       
-      <Navbar />
+      {/* <Navbar /> */}
       
-      <div className="min-h-screen relative pt-[2.8rem]">
+      <div className="min-h-screen relative">
         {/* Main Content with bg1 background */}
         <div 
           className="relative min-h-screen" 

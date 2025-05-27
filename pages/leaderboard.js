@@ -1,12 +1,12 @@
 import Leaderboard from '../components/Leaderboard';
-import Navbar from '../components/Navbar';
+// import Navbar from '../components/Navbar';
 import Image from 'next/image';
 
 export default function LeaderboardPage() {
   return (
     <div className="min-h-screen relative flex flex-col">
       {/* Section 1: Navbar */}
-      <Navbar />
+      {/* <Navbar /> */}
       
       {/* Section 2: Scoreboard Banner */}
       <div className="relative w-full h-[200px] md:h-[300px]">

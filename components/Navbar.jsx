@@ -95,7 +95,7 @@ export default function Navbar() {
   
   return (
     <>
-      <nav className="w-full bg-navy-100 shadow-lg h-[2.8rem] flex items-center justify-between px-5 z-[999] fixed top-0 left-0 right-0 border-b-2 border-[#FFD700]">
+      <nav className="w-full bg-navy-100 shadow-lg h-[2.8rem] flex items-center justify-between px-5 z-[999] sticky top-0 border-b-2 border-[#FFD700]">
         <div className="w-20 h-[2rem] relative">
           <Image
             src="/images/logo.png"

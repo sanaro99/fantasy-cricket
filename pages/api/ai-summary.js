@@ -16,24 +16,32 @@ const getMatchStatusAndCachePolicy = (fixture) => {
 
   const timeToStartMinutes = (startTime.getTime() - now.getTime()) / (1000 * 60);
 
-  if (fixture.status === 'Finished' || fixture.status === 'Aban.' || fixture.status === 'Cancl.' || fixture.status === 'Awarded') {
-    statusType = 'finished';
-    cacheDurationMinutes = 1440; // 24 hours for finished matches
-  } else if (fixture.status === 'Live' || fixture.live) {
-    statusType = 'live';
-    cacheDurationMinutes = 5; // 5 minutes for live matches
-  } else if (fixture.status === 'NS' && timeToStartMinutes <= 30 && timeToStartMinutes > -60) { // -60 to catch matches that just started but API not updated
-    statusType = 'starting_soon_or_delayed';
-    cacheDurationMinutes = 15; // 15 minutes for matches starting soon or delayed
-  } else if (fixture.status === 'Delayed' || fixture.status === 'Postp.') {
-    statusType = 'starting_soon_or_delayed';
-    cacheDurationMinutes = 15;
-  } else if (timeToStartMinutes < -60 && fixture.status === 'NS') { // Match likely over or issue, treat as finished for safety
-    statusType = 'finished'; 
-    cacheDurationMinutes = 1440;
-  } else { // Default to upcoming
-    statusType = 'upcoming';
-    cacheDurationMinutes = 60;
+  if(fixture.live === true) { 
+    if (fixture.status === 'Finished' || fixture.status === 'Aban.' || fixture.status === 'Cancl.' || fixture.status === 'Postp.') {
+      statusType = 'finished';
+      cacheDurationMinutes = 1440; // 24 hours for finished matches
+    } else if (fixture.status === '1st Innings' || fixture.status === '2nd Innings' || fixture.status === 'Innings Break' || fixture.status === '3rd Innings' || fixture.status === '4th Innings') { // Applicable for all formats
+      statusType = 'live';
+      cacheDurationMinutes = 2; // 2 minutes for live matches
+    } else if (fixture.status === 'NS' && timeToStartMinutes <= 30 && timeToStartMinutes > -60) { // -60 to catch matches that just started but API not updated
+      statusType = 'starting_soon_or_delayed';
+      cacheDurationMinutes = 15; // 15 minutes for matches starting soon or delayed
+    } else if (fixture.status === 'Tea Break' || fixture.status === 'Lunch' || fixture.status === 'Dinner') {
+      statusType = 'live';
+      cacheDurationMinutes = 30;
+    } else if (fixture.status === 'Stump Day 1' || fixture.status === 'Stump Day 2' || fixture.status === 'Stump Day 3' || fixture.status === 'Stump Day 4') {
+      statusType = 'live';
+      cacheDurationMinutes = 300;
+    } else if (fixture.status === 'Delayed' || fixture.status === 'Int.') {
+      statusType = 'starting_soon_or_delayed';
+      cacheDurationMinutes = 15;
+    } else if (timeToStartMinutes < -60 && fixture.status === 'NS') { // Match likely over or issue, treat as finished for safety
+      statusType = 'finished'; 
+      cacheDurationMinutes = 1440;
+    } else { // Default to upcoming
+      statusType = 'upcoming';
+      cacheDurationMinutes = 60;
+    }
   }
 
   console.log(`Match status: ${statusType}, cache duration: ${cacheDurationMinutes} minutes`);
@@ -103,7 +111,7 @@ export default async function handler(req, res) {
         promptContent = `Generate a post-match analysis for the cricket game between ${teamA} and ${teamB}. ${fixtureNote} Highlight key performances, the final result, and its impact.`;
         break;
       case 'starting_soon_or_delayed':
-        promptContent = `The cricket match between ${teamA} and ${teamB} scheduled at ${matchTime} is starting soon or might be delayed. ${fixtureNote} Provide a brief preview focusing on what to expect, key players, and any updates if available.`;
+        promptContent = `The cricket match between ${teamA} and ${teamB} scheduled at ${matchTime} is starting soon or might be delayed. ${fixtureNote} Provide a brief preview focusing on what to expect, key players, playing XI news, toss, and any updates if available.`;
         break;
       case 'upcoming':
       default:
@@ -120,7 +128,7 @@ export default async function handler(req, res) {
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
-          temperature: 0.5
+          temperature: 0.0
         }
       });
     

@@ -139,7 +139,7 @@ export default function Matches() {
     const [isLocked, setIsLocked] = useState(new Date() >= new Date(fixture.starting_at));
     const [overrideEnabled, setOverrideEnabled] = useState(false);
     const [summary, setSummary] = useState('');
-    const [summaryStatusType, setSummaryStatusType] = useState('upcoming');
+    const [summaryStatusType, setSummaryStatusType] = useState('default');
     const [loadingSummary, setLoadingSummary] = useState(true);
     const [errorSummary, setErrorSummary] = useState('');
     const [showFullSummary, setShowFullSummary] = useState(false);
@@ -154,8 +154,9 @@ export default function Matches() {
         case 'starting_soon_or_delayed':
           return 'AI Match Update';
         case 'upcoming':
+          return 'AI Match Preview';
         default:
-          return 'AI Fixture Preview';
+          return '';
       }
     };
 
@@ -685,17 +686,18 @@ export default function Matches() {
   }
 
   return (
-    <div className="min-h-screen relative font-sans">
-      <div className="w-full object-cover relative min-h-[40vh] max-h-[60vh]" style={{marginTop: '-5rem'}}>
+    <div className="relative font-sans">
+      <div className="max-h-[60vh]">
         <img
           src="/images/game-banner.png"
           alt="Game banner"
+          className="w-full object-cover"
         />
       </div>
 
       {/* Main Content with bg1 background */}
       <div 
-        className="w-full relative min-h-[60vh]" 
+        className="w-full relative min-h-screen" 
         style={{
           backgroundImage: 'url(/images/green-bg.png)',
           backgroundSize: 'cover',
