@@ -2,6 +2,8 @@
 
 This project is a Fantasy Cricket web app built with Next.js, Tailwind CSS, and Supabase. It features OAuth and email-password based authentication, match view and player selection, and weekly and league leaderboards. Currently only supports Indian Premier League (IPL), but can be extended to other leagues by adding the required API endpoints.
 
+![app](./public/images/fantasy-cricket.png)
+
 ## Technologies Used
 
 - **Next.js** (React framework for SSR and SSG)
@@ -103,6 +105,34 @@ You can find these values in your [Supabase project settings](https://app.supaba
 - **Styling:** The app uses a custom navy color palette defined in `tailwind.config.js`.
 - **Backend:** All authentication and data storage is handled via Supabase.
 
+## Screenshots
+
+### Login Page
+![login](./public/images/fantasy-cricket-login.png)
+
+### Fixtures Page
+![fixtures page](./public/images/fantasy-cricket.png)
+
+### Leaderboard Page
+![leaderboard page](./public/images/fantasy-cricket-leaderboard.png)
+
+### Rules Page
+![rules page](./public/images/fantasy-cricket-rules.png)
+
+### More screenshots
+
+#### Big screen device
+![big-screen-1](./public/images/fantasy-cricket-2.png)
+
+![big-screen-2](./public/images/fantasy-cricket-3.png)
+
+#### Small screen device
+![small-screen-1](./public/images/fantasy-cricket-mobile-1.png)
+
+![small-screen-2](./public/images/fantasy-cricket-mobile-2.png)
+
+![small-screen-3](./public/images/fantasy-cricket-mobile-3.png)
+
 ## License
 
-This project is for internal/educational use.
+GNU v3 for source code. See [LICENSE](./LICENSE) for details.
